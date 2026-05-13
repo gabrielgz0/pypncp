@@ -4,7 +4,7 @@ Esquemas extraídos de https://pncp.gov.br/api/consulta/v3/api-docs
 """
 
 from datetime import date, datetime
-from typing import TypeVar
+from typing import Any, TypeVar
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -14,6 +14,21 @@ T = TypeVar("T")
 # --------------------------------------------------------------------------- #
 #  Paginação — usada por TODOS os endpoints de lista
 # --------------------------------------------------------------------------- #
+
+
+class _PageAsyncIterator[T]:
+    """Iterador assíncrono para Page[T]."""
+
+    def __init__(self, data: list[T]) -> None:
+        self._data = data
+        self._index = 0
+
+    async def __anext__(self) -> T:
+        if self._index >= len(self._data):
+            raise StopAsyncIteration
+        item = self._data[self._index]
+        self._index += 1
+        return item
 
 
 class Page[T](BaseModel):
@@ -42,28 +57,9 @@ class Page[T](BaseModel):
         """Alias conveniente para ``data``."""
         return self.data
 
-    def __aiter__(self):
+    def __aiter__(self) -> _PageAsyncIterator[T]:
         """Permite ``async for item in page:``."""
         return _PageAsyncIterator(self.data)
-
-
-class _PageAsyncIterator:
-    """Iterador assíncrono para Page[T].
-
-    Itera síncronamente sobre a página atual — útil para consistência
-    com a API de async generators (list_all).
-    """
-
-    def __init__(self, data: list) -> None:
-        self._data = data
-        self._index = 0
-
-    async def __anext__(self):
-        if self._index >= len(self._data):
-            raise StopAsyncIteration
-        item = self._data[self._index]
-        self._index += 1
-        return item
 
 
 # --------------------------------------------------------------------------- #
@@ -160,7 +156,7 @@ class Contrato(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def _flatten_orgao(cls, data: dict) -> dict:
+    def _flatten_orgao(cls, data: dict[str, Any]) -> dict[str, Any]:
         """Extrai campos de ``orgaoEntidade`` e ``unidadeOrgao`` para o nível
         superior, já que a API devolve esses dados aninhados."""
         if not isinstance(data, dict):
@@ -241,7 +237,7 @@ class Contratacao(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def _flatten_orgao(cls, data: dict) -> dict:
+    def _flatten_orgao(cls, data: dict[str, Any]) -> dict[str, Any]:
         """Extrai campos de ``orgaoEntidade`` e ``unidadeOrgao`` para o nível
         superior."""
         if not isinstance(data, dict):
