@@ -55,7 +55,7 @@ class ContratacoesResource(BaseResource):
             data_inicial: Data inicial.
             data_final: Data final.
             codigo_modalidade: Código da modalidade (obrigatório).
-            prefetch: Quantas páginas antecipar em background (0 = sequencial).
+            prefetch: Nível de concorrência: 0=seq, 1=prefetch, N=N workers
         """
         async for item in self._list_all(
             "/contratacoes/publicacao",
@@ -101,7 +101,7 @@ class ContratacoesResource(BaseResource):
         Args:
             data_final: Data final.
             codigo_modalidade: Código da modalidade (opcional).
-            prefetch: Quantas páginas antecipar em background (0 = sequencial).
+            prefetch: Nível de concorrência: 0=seq, 1=prefetch, N=N workers
         """
         async for item in self._list_all(
             "/contratacoes/proposta",
@@ -144,7 +144,7 @@ class ContratacoesResource(BaseResource):
             data_inicial: Data inicial.
             data_final: Data final.
             codigo_modalidade: Código da modalidade (obrigatório).
-            prefetch: Quantas páginas antecipar em background (0 = sequencial).
+            prefetch: Nível de concorrência: 0=seq, 1=prefetch, N=N workers
         """
         async for item in self._list_all(
             "/contratacoes/atualizacao",

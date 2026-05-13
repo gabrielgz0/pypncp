@@ -55,7 +55,7 @@ class ContratosResource(BaseResource):
             data_inicial: Data inicial.
             data_final: Data final.
             cnpj_orgao: CNPJ do órgão (opcional).
-            prefetch: Quantas páginas antecipar em background (0 = sequencial).
+            prefetch: Nível de concorrência: 0=seq, 1=prefetch, N=N workers
         """
         async for item in self._list_all(
             "/contratos",
@@ -93,7 +93,14 @@ class ContratosResource(BaseResource):
         cnpj_orgao: str | None = None,
         prefetch: int = 1,
     ) -> AsyncIterator[Contrato]:
-        """Itera todos os contratos por atualização (paginação automática)."""
+        """Itera todos os contratos por atualização (paginação automática).
+
+        Args:
+            data_inicial: Data inicial.
+            data_final: Data final.
+            cnpj_orgao: CNPJ do órgão (opcional).
+            prefetch: Nível de concorrência: 0=seq, 1=prefetch, N=N workers
+        """
         async for item in self._list_all(
             "/contratos/atualizacao",
             Contrato,
