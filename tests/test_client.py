@@ -36,6 +36,8 @@ class TestPNCPClientResources:
         assert client.contratos is not None
         assert client.contratacoes is not None
         assert client.atas is not None
+        assert client.search is not None
+        assert client.precos is not None
 
     def test_http_injected_in_resources(self):
         client = PNCPClient()

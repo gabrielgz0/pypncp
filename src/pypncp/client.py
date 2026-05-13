@@ -11,6 +11,7 @@ from pypncp._internal.http import HttpClient
 from pypncp.resources.atas import AtasResource
 from pypncp.resources.contratacoes import ContratacoesResource
 from pypncp.resources.contratos import ContratosResource
+from pypncp.resources.precos import PrecosResource
 from pypncp.resources.search import SearchResource
 
 
@@ -56,6 +57,7 @@ class PNCPClient:
         self.contratacoes = ContratacoesResource(self._http)
         self.atas = AtasResource(self._http)
         self.search = SearchResource()
+        self.precos = PrecosResource()
 
     # ------------------------------------------------------------------ #
     #  Builder

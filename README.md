@@ -296,7 +296,52 @@ async for item in client.search.search_all(
 | `status` | `str` | não | `encerradas`, `recebendo_proposta` |
 | `uf` | `str` | não | Sigla da UF (`SP`, `RJ`, `MG`, etc.) |
 | `municipio` | `str` | não | Código IBGE do município |
-| `modalidade_licitacao` | `int` | não | Código da modalidade (1=leilão, 6=pregão, 8=dispensa, etc.) |
+### Preços homologados
+
+A API de integração do PNCP expõe os **preços efetivamente pagos** pela
+administração pública, com fornecedor, CNPJ e data de homologação — dados
+essenciais para pesquisa de preços em licitações.
+
+> **Atenção:** esta API **não é documentada oficialmente** — foi mapeada
+> por engenharia reversa do portal. Use com ciência de que pode mudar.
+
+```python
+# Itens de uma compra específica
+itens = await client.precos.get_items(
+    orgao="78680337000770", ano=2024, compra=128
+)
+for item in itens:
+    print(item.descricao, item.valor_unitario_estimado)
+
+# Preços homologados de um item
+resultados = await client.precos.get_resultados(
+    orgao="78680337000770", ano=2024, compra=128, item=1
+)
+for r in resultados:
+    print(r.fornecedor_nome, r.cnpj, r.valor_unitario_homologado)
+```
+
+**Pipeline completo:** busca no catálogo → itens → preços homologados
+numa chamada só:
+
+```python
+async for preco in client.precos.buscar_precos(
+    q="dipirona",
+    tipos_documento="edital",
+    uf="SP",
+):
+    print(
+        f"{preco['descricao']} | "
+        f"{preco['fornecedor']} ({preco['cnpj']}) | "
+        f"R$ {preco['valor_unitario']}"
+    )
+```
+
+| Método | Retorno | Descrição |
+|--------|---------|-----------|
+| `get_items(orgao, ano, compra)` | `list[ItemCompra]` | Itens de uma compra |
+| `get_resultados(orgao, ano, compra, item)` | `list[ResultadoItem]` | Preços homologados de um item |
+| `buscar_precos(q, tipos_documento, ...)` | `AsyncIterator[dict]` | Pipeline completo busca → preços |
 
 ---
 
@@ -379,6 +424,32 @@ async for item in client.search.search_all(
 | `esfera_nome` | `str \| None` | Esfera (Federal, Estadual, Municipal) |
 | `poder_nome` | `str \| None` | Poder (Executivo, Legislativo, Judiciário) |
 
+### ItemCompra
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `numero_item` | `int` | Número do item na compra |
+| `descricao` | `str` | Descrição do item |
+| `quantidade` | `float` | Quantidade |
+| `unidade_medida` | `str \| None` | Unidade (Unitário, Lote, etc.) |
+| `valor_unitario_estimado` | `float \| None` | Valor unitário estimado |
+| `valor_total` | `float \| None` | Valor total estimado |
+| `situacao` | `str \| None` | Situação (Homologado, etc.) |
+| `tem_resultado` | `bool \| None` | Se possui preço homologado |
+
+### ResultadoItem
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `fornecedor_nome` | `str` | Nome do fornecedor vencedor |
+| `ni_fornecedor` / `cnpj` | `str` | CNPJ do fornecedor |
+| `valor_unitario_homologado` | `float \| None` | Preço unitário homologado |
+| `valor_total_homologado` | `float \| None` | Preço total homologado |
+| `quantidade_homologada` | `float \| None` | Quantidade homologada |
+| `data_resultado` | `str \| None` | Data do resultado |
+| `sequencial_resultado` | `int \| None` | Sequencial do resultado |
+| `situacao` | `str \| None` | Situação do resultado |
+
 ---
 
 ## Códigos de Modalidade
@@ -408,6 +479,7 @@ async for item in client.search.search_all(
 | `client.contratacoes` | `GET /v1/contratacoes/publicacao`, `GET /v1/contratacoes/proposta`, `GET /v1/contratacoes/atualizacao`, `GET /orgaos/{cnpj}/compras/{ano}/{sequencial}` |
 | `client.atas` | `GET /v1/atas`, `GET /v1/atas/atualizacao` |
 | `client.search` | `GET /api/search/` (não oficial) |
+| `client.precos` | `GET /api/pncp/v1/orgaos/{orgao}/compras/{ano}/{compra}/itens`, `GET .../resultados` (não oficial) |
 
 ### Parâmetros obrigatórios por endpoint
 

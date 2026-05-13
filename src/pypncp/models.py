@@ -379,3 +379,71 @@ class SearchResult(BaseModel):
 
     def __repr__(self) -> str:
         return f"SearchResult(title={self.title!r}, orgao={self.orgao_nome})"
+
+
+# --------------------------------------------------------------------------- #
+#  Item de compra — Integration API /itens
+# --------------------------------------------------------------------------- #
+
+
+class ItemCompra(BaseModel):
+    """Item de uma compra/contrato no PNCP (Integration API).
+
+    Schema retornado por ``/api/pncp/v1/orgaos/{orgao}/compras/{ano}/{compra}/itens``.
+    """
+
+    numero_item: int = Field(default=0, alias="numeroItem")
+    descricao: str = ""
+    quantidade: float = 0.0
+    unidade_medida: str | None = Field(default=None, alias="unidadeMedida")
+    valor_unitario_estimado: float | None = Field(
+        default=None, alias="valorUnitarioEstimado"
+    )
+    valor_total: float | None = Field(default=None, alias="valorTotal")
+    situacao: str | None = Field(default=None, alias="situacaoCompraItemNome")
+    tem_resultado: bool | None = Field(default=None, alias="temResultado")
+
+    model_config = {"populate_by_name": True, "extra": "ignore"}
+
+    def __repr__(self) -> str:
+        return f"ItemCompra(num={self.numero_item}, desc={self.descricao[:40]!r})"
+
+
+# --------------------------------------------------------------------------- #
+#  Resultado (preco homologado) — Integration API /resultados
+# --------------------------------------------------------------------------- #
+
+
+class ResultadoItem(BaseModel):
+    """Resultado/preco homologado de um item no PNCP.
+
+    Schema retornado por
+    ``/api/pncp/v1/orgaos/{orgao}/compras/{ano}/{compra}/itens/{item}/resultados``.
+    """
+
+    fornecedor_nome: str = Field(default="", alias="nomeRazaoSocialFornecedor")
+    ni_fornecedor: str = Field(default="", alias="niFornecedor")
+    valor_unitario_homologado: float | None = Field(
+        default=None, alias="valorUnitarioHomologado"
+    )
+    valor_total_homologado: float | None = Field(
+        default=None, alias="valorTotalHomologado"
+    )
+    quantidade_homologada: float | None = Field(
+        default=None, alias="quantidadeHomologada"
+    )
+    data_resultado: str | None = Field(default=None, alias="dataResultado")
+    sequencial_resultado: int | None = Field(default=None, alias="sequencialResultado")
+    situacao: str | None = Field(default=None, alias="situacaoCompraItemResultadoNome")
+
+    model_config = {"populate_by_name": True, "extra": "ignore"}
+
+    @property
+    def cnpj(self) -> str:
+        return self.ni_fornecedor
+
+    def __repr__(self) -> str:
+        return (
+            f"ResultadoItem(fornecedor={self.fornecedor_nome!r}, "
+            f"valor={self.valor_unitario_homologado})"
+        )
