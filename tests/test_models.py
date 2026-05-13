@@ -10,6 +10,7 @@ from pypncp.models import (
     Page,
     UnidadeOrgao,
 )
+from pypncp.resources.base import BaseResource
 
 
 class TestOrgaoEntidade:
@@ -64,18 +65,36 @@ class TestContrato:
         assert c.data_assinatura == date(2024, 1, 15)
 
     def test_nested_orgao(self):
-        """Caso o DTO contenha orgaoEntidade aninhado, os campos
-        flattened do model podem ser populados manualmente."""
+        """Valida que _flatten_orgao extrai campos de orgaoEntidade/unidadeOrgao."""
         c = Contrato(
             anoContrato=2024,
             sequencialContrato=1,
             numeroContratoEmpenho="001/2024",
             objetoContrato="X",
-            orgao_cnpj="00394502000144",
-            orgao_nome="MGI",
+            orgaoEntidade={
+                "cnpj": "00394502000144",
+                "razaoSocial": "MGI",
+            },
+            unidadeOrgao={
+                "ufSigla": "DF",
+                "nomeUnidade": "Unidade Central",
+            },
         )
         assert c.orgao_cnpj == "00394502000144"
         assert c.orgao_nome == "MGI"
+        assert c.orgao_uf == "DF"
+        assert c.unidade_nome == "Unidade Central"
+
+    def test_repr(self):
+        c = Contrato(
+            anoContrato=2024,
+            sequencialContrato=1,
+            numeroContratoEmpenho="001/2024",
+            objetoContrato="X",
+        )
+        r = repr(c)
+        assert "Contrato(" in r
+        assert "001/2024" in r
 
 
 class TestContratacao:
@@ -98,6 +117,37 @@ class TestContratacao:
         )
         assert c.srp is None
 
+    def test_nested_orgao(self):
+        """Valida que _flatten_orgao extrai campos de orgaoEntidade/unidadeOrgao."""
+        c = Contratacao(
+            anoCompra=2024,
+            sequencialCompra=1,
+            numeroCompra="001/2024",
+            objetoCompra="X",
+            orgaoEntidade={
+                "cnpj": "00394502000144",
+                "razaoSocial": "MGI",
+            },
+            unidadeOrgao={
+                "ufSigla": "DF",
+                "nomeUnidade": "Unidade Central",
+            },
+        )
+        assert c.orgao_cnpj == "00394502000144"
+        assert c.orgao_nome == "MGI"
+        assert c.orgao_uf == "DF"
+
+    def test_repr(self):
+        c = Contratacao(
+            anoCompra=2024,
+            sequencialCompra=1,
+            numeroCompra="001/2024",
+            objetoCompra="X",
+        )
+        r = repr(c)
+        assert "Contratacao(" in r
+        assert "001/2024" in r
+
 
 class TestAta:
     def test_minimal(self):
@@ -116,6 +166,16 @@ class TestAta:
             objetoContratacao="X",
         )
         assert a.cancelado is None
+
+    def test_repr(self):
+        a = Ata(
+            numeroAtaRegistroPreco="001/2024",
+            anoAta=2024,
+            objetoContratacao="X",
+        )
+        r = repr(a)
+        assert "Ata(" in r
+        assert "001/2024" in r
 
 
 class TestPage:
@@ -176,3 +236,14 @@ class TestPage:
         )
         assert p.numero_pagina == 1
         assert p.total_paginas == 2
+
+
+class TestFmtData:
+    def test_string_yyyy_mm_dd(self):
+        assert BaseResource._fmt_data("2025-01-01") == "20250101"
+
+    def test_string_yyyymmdd(self):
+        assert BaseResource._fmt_data("20250101") == "20250101"
+
+    def test_date_object(self):
+        assert BaseResource._fmt_data(date(2025, 1, 1)) == "20250101"

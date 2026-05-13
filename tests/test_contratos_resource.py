@@ -15,7 +15,7 @@ class TestContratosResource:
 
     async def test_list_returns_page(self, httpx_mock):
         httpx_mock.add_response(
-            url="https://pncp.gov.br/api/consulta/v1/contratos?pagina=1&dataInicial=2024-01-01&dataFinal=2024-12-31",
+            url="https://pncp.gov.br/api/consulta/v1/contratos?pagina=1&dataInicial=20240101&dataFinal=20241231",
             json={
                 "data": [self.CONTRATO_JSON],
                 "numeroPagina": 1,
@@ -57,9 +57,8 @@ class TestContratosResource:
             for i in range(4, 6)
         ]
 
-        # Registra uma resposta para cada URL (cada página tem query params diferentes)
         httpx_mock.add_response(
-            url="https://pncp.gov.br/api/consulta/v1/contratos?pagina=1&dataInicial=2024-01-01&dataFinal=2024-12-31",
+            url="https://pncp.gov.br/api/consulta/v1/contratos?pagina=1&dataInicial=20240101&dataFinal=20241231",
             json={
                 "data": items_p1,
                 "numeroPagina": 1,
@@ -70,7 +69,7 @@ class TestContratosResource:
             },
         )
         httpx_mock.add_response(
-            url="https://pncp.gov.br/api/consulta/v1/contratos?pagina=2&dataInicial=2024-01-01&dataFinal=2024-12-31",
+            url="https://pncp.gov.br/api/consulta/v1/contratos?pagina=2&dataInicial=20240101&dataFinal=20241231",
             json={
                 "data": items_p2,
                 "numeroPagina": 2,
@@ -97,7 +96,7 @@ class TestContratosResource:
     async def test_list_all_single_page(self, httpx_mock):
         """list_all com apenas 1 página não deve fazer requisição extra."""
         httpx_mock.add_response(
-            url="https://pncp.gov.br/api/consulta/v1/contratos?pagina=1&dataInicial=2024-01-01&dataFinal=2024-12-31",
+            url="https://pncp.gov.br/api/consulta/v1/contratos?pagina=1&dataInicial=20240101&dataFinal=20241231",
             json={
                 "data": [self.CONTRATO_JSON],
                 "numeroPagina": 1,

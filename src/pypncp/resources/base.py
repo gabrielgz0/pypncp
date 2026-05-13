@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
+from datetime import date
 from typing import Any, TypeVar
 
 from pypncp._internal.http import HttpClient
@@ -19,6 +20,27 @@ class BaseResource:
 
     def __init__(self, http: HttpClient) -> None:
         self._http = http
+
+    # ------------------------------------------------------------------ #
+    #  Utilitários
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def _fmt_data(d: str | date) -> str:
+        """Normaliza data para o formato yyyyMMdd exigido pela API.
+
+        Aceita:
+        - objeto ``date``      → ``date(2025, 1, 1)``
+        - string ``YYYY-MM-DD`` → ``"20250101"``
+        - string ``yyyyMMdd``   → ``"20250101"`` (inalterado)
+        """
+        if isinstance(d, date):
+            return d.strftime("%Y%m%d")
+        return d.replace("-", "")
+
+    # ------------------------------------------------------------------ #
+    #  Paginação
+    # ------------------------------------------------------------------ #
 
     async def _list_page(
         self,

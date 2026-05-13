@@ -17,18 +17,12 @@ class AtasResource(BaseResource):
         GET /v1/atas              — por período de vigência
         GET /v1/atas/atualizacao  — por data de atualização global
 
-    Nota: A API de atas espera data no formato **yyyyMMdd** (ex: 20240101).
+    A API de atas espera data no formato **yyyyMMdd**.
+    Use ``self._fmt_data()`` (herdado de BaseResource) para normalizar.
     """
 
     def __init__(self, http: HttpClient) -> None:
         super().__init__(http)
-
-    @staticmethod
-    def _fmt(d: str | date) -> str:
-        """Converte para yyyyMMdd se for date, senão passa string limpa."""
-        if isinstance(d, date):
-            return d.strftime("%Y%m%d")
-        return d.replace("-", "")  # aceita YYYY-MM-DD ou yyyyMMdd
 
     async def list(
         self,
@@ -37,19 +31,13 @@ class AtasResource(BaseResource):
         data_final: str | date,
         pagina: int = 1,
     ) -> Page[Ata]:
-        """Consulta atas por período de vigência.
-
-        Args:
-            data_inicial: Data inicial (formato YYYY-MM-DD ou yyyyMMdd).
-            data_final: Data final (formato YYYY-MM-DD ou yyyyMMdd).
-            pagina: Número da página (começa em 1).
-        """
+        """Consulta atas por período de vigência."""
         return await self._list_page(
             "/atas",
             Ata,
             pagina=pagina,
-            dataInicial=self._fmt(data_inicial),
-            dataFinal=self._fmt(data_final),
+            dataInicial=self._fmt_data(data_inicial),
+            dataFinal=self._fmt_data(data_final),
         )
 
     async def list_all(
@@ -62,8 +50,8 @@ class AtasResource(BaseResource):
         async for item in self._list_all(
             "/atas",
             Ata,
-            dataInicial=self._fmt(data_inicial),
-            dataFinal=self._fmt(data_final),
+            dataInicial=self._fmt_data(data_inicial),
+            dataFinal=self._fmt_data(data_final),
         ):
             yield item
 
@@ -79,8 +67,8 @@ class AtasResource(BaseResource):
             "/atas/atualizacao",
             Ata,
             pagina=pagina,
-            dataInicial=self._fmt(data_inicial),
-            dataFinal=self._fmt(data_final),
+            dataInicial=self._fmt_data(data_inicial),
+            dataFinal=self._fmt_data(data_final),
         )
 
     async def list_all_atualizacao(
@@ -93,7 +81,7 @@ class AtasResource(BaseResource):
         async for item in self._list_all(
             "/atas/atualizacao",
             Ata,
-            dataInicial=self._fmt(data_inicial),
-            dataFinal=self._fmt(data_final),
+            dataInicial=self._fmt_data(data_inicial),
+            dataFinal=self._fmt_data(data_final),
         ):
             yield item

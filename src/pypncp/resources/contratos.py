@@ -17,7 +17,8 @@ class ContratosResource(BaseResource):
         GET /v1/contratos                   — por data de publicação
         GET /v1/contratos/atualizacao       — por data de atualização global
         GET /v1/orgaos/{cnpj}/compras/{ano}/{sequencial}  — contrato específico
-            (Nota: este endpoint retorna RecuperarContratoDTO)
+
+    Datas sempre normalizadas para yyyyMMdd via ``_fmt_data()``.
     """
 
     def __init__(self, http: HttpClient) -> None:
@@ -34,8 +35,8 @@ class ContratosResource(BaseResource):
         """Consulta contratos por período de publicação do PNCP.
 
         Args:
-            data_inicial: Data inicial (formato YYYY-MM-DD).
-            data_final: Data final (formato YYYY-MM-DD).
+            data_inicial: Data inicial (date ou YYYY-MM-DD ou YYYYMMDD).
+            data_final: Data final.
             cnpj_orgao: CNPJ do órgão (opcional, apenas dígitos).
             pagina: Número da página (começa em 1).
         """
@@ -43,8 +44,8 @@ class ContratosResource(BaseResource):
             "/contratos",
             Contrato,
             pagina=pagina,
-            dataInicial=str(data_inicial),
-            dataFinal=str(data_final),
+            dataInicial=self._fmt_data(data_inicial),
+            dataFinal=self._fmt_data(data_final),
             cnpjOrgao=cnpj_orgao,
         )
 
@@ -59,8 +60,8 @@ class ContratosResource(BaseResource):
         async for item in self._list_all(
             "/contratos",
             Contrato,
-            dataInicial=str(data_inicial),
-            dataFinal=str(data_final),
+            dataInicial=self._fmt_data(data_inicial),
+            dataFinal=self._fmt_data(data_final),
             cnpjOrgao=cnpj_orgao,
         ):
             yield item
@@ -78,8 +79,8 @@ class ContratosResource(BaseResource):
             "/contratos/atualizacao",
             Contrato,
             pagina=pagina,
-            dataInicial=str(data_inicial),
-            dataFinal=str(data_final),
+            dataInicial=self._fmt_data(data_inicial),
+            dataFinal=self._fmt_data(data_final),
             cnpjOrgao=cnpj_orgao,
         )
 
@@ -94,8 +95,8 @@ class ContratosResource(BaseResource):
         async for item in self._list_all(
             "/contratos/atualizacao",
             Contrato,
-            dataInicial=str(data_inicial),
-            dataFinal=str(data_final),
+            dataInicial=self._fmt_data(data_inicial),
+            dataFinal=self._fmt_data(data_final),
             cnpjOrgao=cnpj_orgao,
         ):
             yield item
@@ -106,16 +107,7 @@ class ContratosResource(BaseResource):
         ano: int,
         sequencial: int,
     ) -> Contrato:
-        """Consulta um contrato específico por CNPJ do órgão, ano e sequencial.
-
-        Args:
-            orgao_cnpj: CNPJ do órgão (apenas dígitos).
-            ano: Ano do contrato.
-            sequencial: Número sequencial do contrato.
-
-        Nota: Este endpoint faz parte da API de Consulta de Contratação,
-        que retorna os dados completos de um contrato específico.
-        """
+        """Consulta um contrato específico por CNPJ do órgão, ano e sequencial."""
         data = await self._http.get(
             f"/orgaos/{orgao_cnpj}/compras/{ano}/{sequencial}",
         )

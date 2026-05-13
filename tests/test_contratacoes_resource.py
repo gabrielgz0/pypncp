@@ -15,7 +15,7 @@ class TestContratacoesResource:
 
     async def test_list_publicacao_returns_page(self, httpx_mock):
         httpx_mock.add_response(
-            url="https://pncp.gov.br/api/consulta/v1/contratacoes/publicacao?pagina=1&dataInicial=2024-01-01&dataFinal=2024-12-31&codigoModalidadeContratacao=1",
+            url="https://pncp.gov.br/api/consulta/v1/contratacoes/publicacao?pagina=1&dataInicial=20240101&dataFinal=20241231&codigoModalidadeContratacao=1",
             json={
                 "data": [self.PUBLICACAO_JSON],
                 "numeroPagina": 1,
@@ -42,7 +42,7 @@ class TestContratacoesResource:
 
     async def test_list_com_proposta(self, httpx_mock):
         httpx_mock.add_response(
-            url="https://pncp.gov.br/api/consulta/v1/contratacoes/proposta?pagina=1&dataFinal=2024-12-31",
+            url="https://pncp.gov.br/api/consulta/v1/contratacoes/proposta?pagina=1&dataFinal=20241231",
             json={
                 "data": [self.PUBLICACAO_JSON],
                 "numeroPagina": 1,

@@ -6,9 +6,10 @@ Esquemas extraídos de https://pncp.gov.br/api/consulta/v3/api-docs
 from datetime import date, datetime
 from typing import TypeVar
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 T = TypeVar("T")
+
 
 # --------------------------------------------------------------------------- #
 #  Paginação — usada por TODOS os endpoints de lista
@@ -18,8 +19,9 @@ T = TypeVar("T")
 class Page[T](BaseModel):
     """Resposta paginada da API de Consulta.
 
-    A API usa `data` para a lista de itens, `numeroPagina` para o número
-    da página atual, e `totalPaginas`/`totalRegistros` para metadados.
+    A API usa ``data`` para a lista de itens, ``numeroPagina`` para o
+    número da página atual, ``totalPaginas``/``totalRegistros`` para
+    metadados e ``paginasRestantes`` para controle de paginação.
     """
 
     data: list[T] = []
@@ -37,7 +39,7 @@ class Page[T](BaseModel):
 
     @property
     def items(self) -> list[T]:
-        """Alias conveniente para `data`."""
+        """Alias conveniente para ``data``."""
         return self.data
 
 
@@ -80,7 +82,12 @@ class UnidadeOrgao(BaseModel):
 
 
 class Contrato(BaseModel):
-    """Contrato/Empenho (RecuperarContratoDTO)."""
+    """Contrato/Empenho (RecuperarContratoDTO).
+
+    Os campos ``orgao_*`` e ``unidade_nome`` são achatados a partir
+    dos objetos aninhados ``orgaoEntidade`` e ``unidadeOrgao`` que a
+    API devolve.
+    """
 
     numero_controle_pncp_compra: str | None = Field(
         default=None, alias="numeroControlePncpCompra"
@@ -117,7 +124,7 @@ class Contrato(BaseModel):
         default=None, alias="dataAtualizacaoGlobal"
     )
 
-    # Relacionamentos (aninhados)
+    # Relacionamentos (extraídos de orgaoEntidade / unidadeOrgao via validator)
     orgao_cnpj: str | None = None
     orgao_nome: str | None = None
     orgao_uf: str | None = None
@@ -128,14 +135,44 @@ class Contrato(BaseModel):
 
     model_config = {"populate_by_name": True, "extra": "ignore"}
 
+    @model_validator(mode="before")
+    @classmethod
+    def _flatten_orgao(cls, data: dict) -> dict:
+        """Extrai campos de ``orgaoEntidade`` e ``unidadeOrgao`` para o nível
+        superior, já que a API devolve esses dados aninhados."""
+        if not isinstance(data, dict):
+            return data
+
+        if (orgao := data.get("orgaoEntidade")) and isinstance(orgao, dict):
+            data.setdefault("orgao_cnpj", orgao.get("cnpj"))
+            data.setdefault("orgao_nome", orgao.get("razaoSocial"))
+
+        if (unidade := data.get("unidadeOrgao")) and isinstance(unidade, dict):
+            data.setdefault("orgao_uf", unidade.get("ufSigla"))
+            data.setdefault("unidade_nome", unidade.get("nomeUnidade"))
+
+        return data
+
+    def __repr__(self) -> str:
+        return (
+            f"Contrato(numero={self.numero_contrato_empenho}, "
+            f"orgao={self.orgao_nome}, "
+            f"valor={self.valor_global})"
+        )
+
 
 # --------------------------------------------------------------------------- #
-#  Contratação (Compra) — RecuperarCompraPublicacaoDTO
+#  Contratação (Compra) — RecuperarCompraPublicacaoDTO / RecuperarCompraDTO
 # --------------------------------------------------------------------------- #
 
 
 class Contratacao(BaseModel):
-    """Contratação pública (RecuperarCompraPublicacaoDTO)."""
+    """Contratação pública (RecuperarCompraPublicacaoDTO).
+
+    Os campos ``orgao_*`` e ``unidade_nome`` são achatados a partir
+    dos objetos aninhados ``orgaoEntidade`` e ``unidadeOrgao`` que a
+    API devolve.
+    """
 
     ano_compra: int = Field(default=0, alias="anoCompra")
     sequencial_compra: int = Field(default=0, alias="sequencialCompra")
@@ -147,7 +184,7 @@ class Contratacao(BaseModel):
     )
     numero_controle_pncp: str | None = Field(default=None, alias="numeroControlePNCP")
 
-    # Órgão
+    # Órgão (extraídos de orgaoEntidade / unidadeOrgao via validator)
     orgao_cnpj: str | None = None
     orgao_nome: str | None = None
     orgao_uf: str | None = None
@@ -179,6 +216,31 @@ class Contratacao(BaseModel):
 
     model_config = {"populate_by_name": True, "extra": "ignore"}
 
+    @model_validator(mode="before")
+    @classmethod
+    def _flatten_orgao(cls, data: dict) -> dict:
+        """Extrai campos de ``orgaoEntidade`` e ``unidadeOrgao`` para o nível
+        superior."""
+        if not isinstance(data, dict):
+            return data
+
+        if (orgao := data.get("orgaoEntidade")) and isinstance(orgao, dict):
+            data.setdefault("orgao_cnpj", orgao.get("cnpj"))
+            data.setdefault("orgao_nome", orgao.get("razaoSocial"))
+
+        if (unidade := data.get("unidadeOrgao")) and isinstance(unidade, dict):
+            data.setdefault("orgao_uf", unidade.get("ufSigla"))
+            data.setdefault("unidade_nome", unidade.get("nomeUnidade"))
+
+        return data
+
+    def __repr__(self) -> str:
+        return (
+            f"Contratacao(numero={self.numero_compra}, "
+            f"orgao={self.orgao_nome}, "
+            f"modalidade={self.modalidade_nome})"
+        )
+
 
 # --------------------------------------------------------------------------- #
 #  Ata de Registro de Preço — AtaRegistroPrecoPeriodoDTO
@@ -201,7 +263,7 @@ class Ata(BaseModel):
     cancelado: bool | None = None
     possibilidade_adesao: bool | None = Field(default=None, alias="possibilidadeAdesao")
 
-    # Órgão
+    # Órgão (já vem em campo plano no JSON: cnpjOrgao, nomeOrgao)
     orgao_cnpj: str | None = Field(default=None, alias="cnpjOrgao")
     orgao_nome: str | None = Field(default=None, alias="nomeOrgao")
     orgao_uf: str | None = None
@@ -219,3 +281,6 @@ class Ata(BaseModel):
     )
 
     model_config = {"populate_by_name": True, "extra": "ignore"}
+
+    def __repr__(self) -> str:
+        return f"Ata(numero={self.numero_ata_registro_preco}, orgao={self.orgao_nome})"

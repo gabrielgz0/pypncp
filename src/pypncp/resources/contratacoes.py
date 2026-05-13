@@ -18,6 +18,8 @@ class ContratacoesResource(BaseResource):
         GET /v1/contratacoes/proposta      — com recebimento de propostas aberto
         GET /v1/contratacoes/atualizacao   — por data de atualização global
         GET /v1/orgaos/{cnpj}/compras/{ano}/{sequencial} — contratação específica
+
+    Datas sempre normalizadas para yyyyMMdd via ``_fmt_data()``.
     """
 
     def __init__(self, http: HttpClient) -> None:
@@ -34,17 +36,17 @@ class ContratacoesResource(BaseResource):
         """Consulta contratações por data de publicação.
 
         Args:
-            data_inicial: Data inicial (YYYY-MM-DD).
-            data_final: Data final (YYYY-MM-DD).
-            codigo_modalidade: Código da modalidade de contratação (obrigatório).
+            data_inicial: Data inicial.
+            data_final: Data final.
+            codigo_modalidade: Código da modalidade (obrigatório).
             pagina: Número da página (começa em 1).
         """
         return await self._list_page(
             "/contratacoes/publicacao",
             Contratacao,
             pagina=pagina,
-            dataInicial=str(data_inicial),
-            dataFinal=str(data_final),
+            dataInicial=self._fmt_data(data_inicial),
+            dataFinal=self._fmt_data(data_final),
             codigoModalidadeContratacao=codigo_modalidade,
         )
 
@@ -59,8 +61,8 @@ class ContratacoesResource(BaseResource):
         async for item in self._list_all(
             "/contratacoes/publicacao",
             Contratacao,
-            dataInicial=str(data_inicial),
-            dataFinal=str(data_final),
+            dataInicial=self._fmt_data(data_inicial),
+            dataFinal=self._fmt_data(data_final),
             codigoModalidadeContratacao=codigo_modalidade,
         ):
             yield item
@@ -75,15 +77,15 @@ class ContratacoesResource(BaseResource):
         """Consulta contratações com recebimento de propostas aberto.
 
         Args:
-            data_final: Data final (YYYY-MM-DD). **Apenas data final** é suportada.
-            codigo_modalidade: Código da modalidade (opcional).
+            data_final: Data final. Apenas data final — sem data inicial.
+            codigo_modalidade: Código da modalidade (opcional neste endpoint).
             pagina: Número da página.
         """
         return await self._list_page(
             "/contratacoes/proposta",
             Contratacao,
             pagina=pagina,
-            dataFinal=str(data_final),
+            dataFinal=self._fmt_data(data_final),
             codigoModalidadeContratacao=codigo_modalidade,
         )
 
@@ -97,7 +99,7 @@ class ContratacoesResource(BaseResource):
         async for item in self._list_all(
             "/contratacoes/proposta",
             Contratacao,
-            dataFinal=str(data_final),
+            dataFinal=self._fmt_data(data_final),
             codigoModalidadeContratacao=codigo_modalidade,
         ):
             yield item
@@ -113,8 +115,8 @@ class ContratacoesResource(BaseResource):
         """Consulta contratações por data de atualização global.
 
         Args:
-            data_inicial: Data inicial (YYYY-MM-DD).
-            data_final: Data final (YYYY-MM-DD).
+            data_inicial: Data inicial.
+            data_final: Data final.
             codigo_modalidade: Código da modalidade (obrigatório).
             pagina: Número da página.
         """
@@ -122,8 +124,8 @@ class ContratacoesResource(BaseResource):
             "/contratacoes/atualizacao",
             Contratacao,
             pagina=pagina,
-            dataInicial=str(data_inicial),
-            dataFinal=str(data_final),
+            dataInicial=self._fmt_data(data_inicial),
+            dataFinal=self._fmt_data(data_final),
             codigoModalidadeContratacao=codigo_modalidade,
         )
 
@@ -138,8 +140,8 @@ class ContratacoesResource(BaseResource):
         async for item in self._list_all(
             "/contratacoes/atualizacao",
             Contratacao,
-            dataInicial=str(data_inicial),
-            dataFinal=str(data_final),
+            dataInicial=self._fmt_data(data_inicial),
+            dataFinal=self._fmt_data(data_final),
             codigoModalidadeContratacao=codigo_modalidade,
         ):
             yield item
