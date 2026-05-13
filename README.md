@@ -260,15 +260,20 @@ atas, avisos, etc.) e é especialmente útil para:
 
 ```python
 # Busca simples — resultados paginados
-page = await client.search.search(
+page = await client.search.query(
     q="dipirona",
     tipos_documento="edital",
 )
 for item in page.data:
     print(item.title, item.orgao_nome, item.valor_global)
 
+    # Fetch lazy: cada item pode buscar seus precos homologados
+    resultados = await item.get_resultados()
+    for r in resultados:
+        print(r.fornecedor_nome, r.cnpj, r.valor_unitario_homologado)
+
 # Com filtros
-page = await client.search.search(
+page = await client.search.query(
     q="notebook",
     tipos_documento="ata",
     status="encerradas",
@@ -278,7 +283,7 @@ page = await client.search.search(
 )
 
 # Paginação automática — itera todos os resultados
-async for item in client.search.search_all(
+async for item in client.search.query_all(
     q="cadeira",
     tipos_documento="edital,contrato",
     uf="RJ",
@@ -491,7 +496,7 @@ async for preco in client.precos.buscar_precos(
 | `contratacoes.list_atualizacao()` | `data_inicial`, `data_final`, **`codigo_modalidade`** |
 | `contratacoes.list_com_proposta()` | `data_final` |
 | `atas.list()` | `data_inicial`, `data_final` |
-| `search.search()` | **`q`**, **`tipos_documento`** |
+| `search.query()` | **`q`**, **`tipos_documento`** |
 
 Documentação oficial: [Swagger da API de Consulta](https://pncp.gov.br/api/consulta/swagger-ui/index.html)
 

@@ -1,10 +1,17 @@
 """Recurso de busca — API de Pesquisa do PNCP.
 
 Endpoint nao documentado oficialmente (interno do portal):
-    GET https://pncp.gov.br/api/search/?q=<termo>&tipos_documento=<tipo>
+    GET https://pncp.gov.br/api/search/
 
-A API de busca faz full-text search no catalogo do PNCP e retorna
-resultados de editais, contratos, atas e outros documentos.
+Uso:
+    async with PNCPClient() as client:
+        page = await client.search.query("dipirona", tipos_documento="edital")
+        for item in page.data:
+            print(item.title, item.orgao_nome)
+            # Fetch lazy dos precos homologados
+            resultados = await item.get_resultados()
+            for r in resultados:
+                print(r.fornecedor_nome, r.valor_unitario_homologado)
 """
 
 from __future__ import annotations
@@ -19,25 +26,7 @@ from pypncp.models import Page, SearchResult
 
 
 class SearchResource:
-    """Recurso para busca full-text no catalogo do PNCP.
-
-    Uso:
-        async with PNCPClient() as client:
-            page = await client.search.search(
-                q="dipirona",
-                tipos_documento="edital",
-                pagina=1,
-            )
-            for item in page.data:
-                print(item.title, item.orgao_nome)
-
-            async for item in client.search.search_all(
-                q="notebook",
-                tipos_documento="edital",
-                status="encerradas",
-            ):
-                print(item.description, item.valor_global)
-    """
+    """Recurso para busca full-text no catalogo do PNCP."""
 
     BASE_URL = "https://pncp.gov.br/api/search"
 
@@ -48,7 +37,7 @@ class SearchResource:
     #  Busca paginada
     # ------------------------------------------------------------------ #
 
-    async def search(
+    async def query(
         self,
         *,
         q: str,
@@ -63,16 +52,19 @@ class SearchResource:
     ) -> Page[SearchResult]:
         """Busca itens no catalogo do PNCP.
 
+        Cada ``SearchResult`` retornado possui o metodo ``get_resultados()``
+        que faz fetch lazy dos precos homologados (fornecedor, CNPJ, valor).
+
         Args:
             q: Termo de busca (obrigatorio).
-            tipos_documento: Filtro de tipo (edital, contrato, ata, ...).
+            tipos_documento: Filtro de tipo (edital, contrato, ata).
             pagina: Numero da pagina (comeca em 1).
-            tam_pagina: Itens por pagina (max 50?).
-            ordenacao: Ordenacao ("-data" para decrescente, "data" para crescente).
-            status: Filtro de status ("encerradas", "recebendo_proposta", ...).
-            uf: Sigla da UF (SP, RJ, MG, ...).
-            municipio: Codigo do municipio IBGE.
-            modalidade_licitacao: Codigo da modalidade (1=Pregao, ...).
+            tam_pagina: Itens por pagina.
+            ordenacao: "-data" (decrescente) ou "data" (crescente).
+            status: "encerradas", "recebendo_proposta", etc.
+            uf: Sigla da UF (SP, RJ, MG).
+            municipio: Codigo do municipio (IBGE).
+            modalidade_licitacao: Codigo da modalidade.
         """
         params: dict[str, Any] = {
             "q": q,
@@ -97,6 +89,9 @@ class SearchResource:
         total_paginas = max(1, math.ceil(total / tam_pagina)) if total > 0 else 0
 
         items = [SearchResult(**item) for item in raw_items]
+        for item in items:
+            item._http = self._http  # injeta client para fetch lazy
+
         return Page(
             data=items,
             numeroPagina=pagina,
@@ -110,7 +105,7 @@ class SearchResource:
     #  Busca com paginacao automatica
     # ------------------------------------------------------------------ #
 
-    async def search_all(
+    async def query_all(
         self,
         *,
         q: str,
@@ -127,17 +122,6 @@ class SearchResource:
 
         Quando ``prefetch > 0`` (padrão), a próxima página é baixada em
         background enquanto o consumidor processa a página atual.
-
-        Args:
-            q: Termo de busca.
-            tipos_documento: Filtro de tipo.
-            tam_pagina: Itens por pagina.
-            prefetch: Nivel de concorrencia (0=seq, 1=prefetch, N=workers).
-            ordenacao: Ordenacao.
-            status: Filtro de status.
-            uf: Sigla da UF.
-            municipio: Codigo do municipio.
-            modalidade_licitacao: Codigo da modalidade.
         """
         pagina = 1
         preload: asyncio.Task[Page[SearchResult]] | None = None
@@ -147,28 +131,20 @@ class SearchResource:
                 page = await preload
                 preload = None
             else:
-                page = await self.search(
-                    q=q,
-                    tipos_documento=tipos_documento,
-                    pagina=pagina,
-                    tam_pagina=tam_pagina,
-                    ordenacao=ordenacao,
-                    status=status,
-                    uf=uf,
+                page = await self.query(
+                    q=q, tipos_documento=tipos_documento,
+                    pagina=pagina, tam_pagina=tam_pagina,
+                    ordenacao=ordenacao, status=status, uf=uf,
                     municipio=municipio,
                     modalidade_licitacao=modalidade_licitacao,
                 )
 
             if page.has_more and prefetch > 0:
                 preload = asyncio.ensure_future(
-                    self.search(
-                        q=q,
-                        tipos_documento=tipos_documento,
-                        pagina=pagina + 1,
-                        tam_pagina=tam_pagina,
-                        ordenacao=ordenacao,
-                        status=status,
-                        uf=uf,
+                    self.query(
+                        q=q, tipos_documento=tipos_documento,
+                        pagina=pagina + 1, tam_pagina=tam_pagina,
+                        ordenacao=ordenacao, status=status, uf=uf,
                         municipio=municipio,
                         modalidade_licitacao=modalidade_licitacao,
                     )

@@ -154,7 +154,7 @@ class PrecosResource:
                 page = await preload
                 preload = None
             else:
-                page = await self._search.search(
+                page = await self._search.query(
                     q=q,
                     tipos_documento=tipos_documento,
                     pagina=pagina,
@@ -170,7 +170,7 @@ class PrecosResource:
             # Prefetch proxima pagina de busca em background
             if page.has_more and prefetch > 0:
                 preload = asyncio.ensure_future(
-                    self._search.search(
+                    self._search.query(
                         q=q,
                         tipos_documento=tipos_documento,
                         pagina=pagina + 1,

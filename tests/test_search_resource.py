@@ -40,7 +40,7 @@ class TestSearchResource:
         )
 
         resource = SearchResource()
-        page = await resource.search(q="dipirona", tipos_documento="edital")
+        page = await resource.query(q="dipirona", tipos_documento="edital")
 
         assert isinstance(page, Page)
         assert len(page.data) == 1
@@ -70,7 +70,7 @@ class TestSearchResource:
 
         resource = SearchResource()
         results = []
-        async for item in resource.search_all(
+        async for item in resource.query_all(
             q="dipirona", tipos_documento="edital", tam_pagina=2
         ):
             results.append(item)
@@ -87,7 +87,7 @@ class TestSearchResource:
         )
 
         resource = SearchResource()
-        page = await resource.search(
+        page = await resource.query(
             q="dipirona",
             tipos_documento="edital",
             ordenacao="-data",
@@ -106,7 +106,7 @@ class TestSearchResource:
         )
 
         resource = SearchResource()
-        page = await resource.search(q="zzzzz", tipos_documento="edital")
+        page = await resource.query(q="zzzzz", tipos_documento="edital")
 
         assert page.data == []
         assert page.total_registros == 0

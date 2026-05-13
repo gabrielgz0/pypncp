@@ -377,6 +377,39 @@ class SearchResult(BaseModel):
 
     model_config = {"populate_by_name": True, "extra": "ignore"}
 
+    # injetado pelo SearchResource — HttpClient para fetch lazy
+    _http: Any = None
+
+    async def get_resultados(self) -> "list[ResultadoItem]":
+        if self._http is None or not self.tem_resultado:
+            return []
+
+        parts = self.item_url.split("/")
+        if len(parts) < 5:
+            return []
+        _, _, orgao, ano, compra = parts[:5]
+        base = "https://pncp.gov.br/api/pncp/v1"
+        url_itens = f"{base}/orgaos/{orgao}/compras/{ano}/{compra}/itens"
+
+        data = await self._http.get(
+            url_itens, params={"pagina": 1, "tamanhoPagina": 50}
+        )
+        itens_raw = data if isinstance(data, list) else []
+
+        resultados: list[ResultadoItem] = []
+        for item_raw in itens_raw:
+            if not item_raw.get("temResultado"):
+                continue
+            url_res = (
+                f"{base}/orgaos/{orgao}/compras/{ano}/{compra}"
+                f"/itens/{item_raw['numeroItem']}/resultados"
+            )
+            res_data = await self._http.get(url_res)
+            if isinstance(res_data, list):
+                for r in res_data:
+                    resultados.append(ResultadoItem(**r))
+        return resultados
+
     def __repr__(self) -> str:
         return f"SearchResult(title={self.title!r}, orgao={self.orgao_nome})"
 
