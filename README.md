@@ -1,6 +1,10 @@
 # pypncp
 
-![PyPI](https://img.shields.io/pypi/v/pypncp) ![Python Version](https://img.shields.io/pypi/pyversions/pypncp) ![License](https://img.shields.io/pypi/l/pypncp)
+[![CI](https://github.com/gabrielgz0/pypncp/actions/workflows/ci.yml/badge.svg)](https://github.com/gabrielgz0/pypncp/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/pypncp)](https://pypi.org/project/pypncp/)
+[![Python Version](https://img.shields.io/pypi/pyversions/pypncp)](https://pypi.org/project/pypncp/)
+[![License](https://img.shields.io/pypi/l/pypncp)](https://pypi.org/project/pypncp/)
+[![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/gabrielgz0/.../raw/coverage.json)](https://github.com/gabrielgz0/pypncp/actions)
 
 **Cliente Python assíncrono para a API de Consulta do PNCP** — Portal Nacional de Contratações Públicas.
 
@@ -10,91 +14,89 @@
 
 ### Adicionar ao projeto
 
-Com `uv` (recomendado):
-
 ```bash
-uv add pypncp
-```
-
-Com `pip`:
-
-```bash
-pip install pypncp
+uv add pypncp          # com uv (recomendado)
+pip install pypncp     # ou com pip
 ```
 
 Ou direto no `pyproject.toml`:
 
 ```toml
 [project]
-dependencies = [
-    "pypncp>=0.1",
-]
+dependencies = ["pypncp>=0.1"]
 ```
 
 ### Criar o cliente
 
-O cliente é a entrada única para a API. Use `async with` pra gerenciar o ciclo de vida:
-
 ```python
 from pypncp import PNCPClient
 
-
-async def buscar_dados():
+async def buscar():
     async with PNCPClient() as client:
-        # client está pronto — usa os resources abaixo
-        ...
-
-# Fora de async def, use asyncio.run():
-# asyncio.run(buscar_dados())
+        ...  # client pronto
 ```
 
 ### Exemplos por recurso
 
-**Contratos** — busque contratos por período de publicação:
+**Contratos** — datas aceitas como `str "YYYYMMDD"`, `str "YYYY-MM-DD"` ou `date`:
 
 ```python
+from datetime import date
+
 async with PNCPClient() as client:
-    # Uma página
     page = await client.contratos.list(
-        data_inicial="2025-01-01",
-        data_final="2025-03-31",
+        data_inicial="20250101",       # ou date(2025, 1, 1)
+        data_final="20250331",
     )
     for contrato in page.data:
         print(contrato.numero_contrato_empenho, contrato.valor_global)
 
-    # Todas as páginas (paginação automática)
-    async for contrato in client.contratos.list_all(
-        data_inicial="2025-01-01",
-        data_final="2025-03-31",
+    # Paginação automática
+    async for c in client.contratos.list_all(
+        data_inicial=date(2025, 1, 1),
+        data_final=date(2025, 3, 31),
     ):
-        print(contrato.objeto_contrato)
+        print(c.objeto_contrato, c.orgao_nome)
 ```
 
-**Contratações (licitações)** — filtre por modalidade (código 1 = pregão):
+**Contratações (licitações)** — `codigo_modalidade` é obrigatório em `list_publicacao` e `list_atualizacao`, opcional em `list_com_proposta`:
 
 ```python
+from datetime import date
+
 async with PNCPClient() as client:
+    # Publicações — modalidade obrigatória (1 = Pregão)
     async for compra in client.contratacoes.list_all_publicacao(
-        data_inicial="2025-01-01",
-        data_final="2025-03-31",
-        codigo_modalidade=1,  # 1 = Pregão
+        data_inicial=date(2025, 1, 1),
+        data_final=date(2025, 3, 31),
+        codigo_modalidade=1,
     ):
         print(compra.objeto_compra, compra.orgao_nome)
 
-    # Com propostas abertas (apenas data_final)
+    # Propostas abertas — modalidade opcional, data_final >= hoje
     async for compra in client.contratacoes.list_all_com_proposta(
-        data_final="2025-12-31",
+        data_final=date.today(),
     ):
         print(compra.objeto_compra, compra.data_abertura_proposta)
+
+    # Atualizações — modalidade obrigatória
+    async for compra in client.contratacoes.list_all_atualizacao(
+        data_inicial=date(2025, 1, 1),
+        data_final=date(2025, 3, 31),
+        codigo_modalidade=5,
+    ):
+        ...
 ```
 
 **Atas de registro de preço:**
 
 ```python
+from datetime import date
+
 async with PNCPClient() as client:
     async for ata in client.atas.list_all(
-        data_inicial="2025-01-01",
-        data_final="2025-12-31",
+        data_inicial=date(2025, 1, 1),
+        data_final=date(2025, 12, 31),
     ):
         print(ata.objeto_contratacao, ata.orgao_nome)
 ```
@@ -102,41 +104,37 @@ async with PNCPClient() as client:
 ### Paginação
 
 ```python
-# Automática — use list_all*() (async generator)
+# Automática — list_all*() itera todas as páginas
 async for contrato in client.contratos.list_all(
-    data_inicial="2025-01-01",
-    data_final="2025-12-31",
+    data_inicial="20250101",
+    data_final="20251231",
 ):
     ...
 
-
-# Manual — use list() e controle a página
+# Manual — list() devolve Page[T] com metadados
 page = await client.contratos.list(
-    data_inicial="2025-01-01",
-    data_final="2025-12-31",
+    data_inicial="20250101",
+    data_final="20251231",
     pagina=1,
 )
 print(f"Página {page.numero_pagina} de {page.total_paginas}")
 print(f"Itens nesta página: {len(page.data)}")
+print(f"Há mais páginas: {page.has_more}")
 
-# Propriedades úteis de Page[T]:
-#   page.data        → list[T]
-#   page.numero_pagina
-#   page.total_paginas
-#   page.has_more    → True se há mais páginas
+# page pode ser usado como iterador assíncrono
+async for item in page:
+    print(item)
 ```
 
 ### Tratamento de erros
-
-Todas as exceções herdam de `PNCPError` — nunca vazam exceções de transporte:
 
 ```python
 from pypncp import PNCPError, NotFoundError, RateLimitError
 
 try:
     page = await client.contratos.list(
-        data_inicial="2025-01-01",
-        data_final="2025-12-31",
+        data_inicial="20250101",
+        data_final="20251231",
     )
 except NotFoundError:
     print("Recurso não encontrado (HTTP 404)")
@@ -149,6 +147,8 @@ except PNCPError as e:
 ### Exemplo completo com FastAPI
 
 ```python
+from datetime import date
+
 from fastapi import FastAPI, HTTPException
 from pypncp import PNCPClient, NotFoundError
 
@@ -156,11 +156,7 @@ app = FastAPI()
 
 
 @app.get("/contratos")
-async def listar_contratos(
-    data_inicial: str,
-    data_final: str,
-    pagina: int = 1,
-):
+async def listar_contratos(data_inicial: str, data_final: str, pagina: int = 1):
     async with PNCPClient() as client:
         page = await client.contratos.list(
             data_inicial=data_inicial,
@@ -180,9 +176,7 @@ async def get_contrato(orgao_cnpj: str, ano: int, sequencial: int):
     async with PNCPClient() as client:
         try:
             contrato = await client.contratos.get(
-                orgao_cnpj=orgao_cnpj,
-                ano=ano,
-                sequencial=sequencial,
+                orgao_cnpj=orgao_cnpj, ano=ano, sequencial=sequencial,
             )
             return contrato.model_dump()
         except NotFoundError:
@@ -191,12 +185,112 @@ async def get_contrato(orgao_cnpj: str, ano: int, sequencial: int):
 
 ---
 
+## Modelos
+
+### Contrato
+
+| Campo | Tipo | Origem na API |
+|-------|------|---------------|
+| `numero_contrato_empenho` | `str` | `numeroContratoEmpenho` |
+| `ano_contrato` | `int` | `anoContrato` |
+| `sequencial_contrato` | `int` | `sequencialContrato` |
+| `objeto_contrato` | `str` | `objetoContrato` |
+| `processo` | `str \| None` | `processo` |
+| `orgao_cnpj` | `str \| None` | `orgaoEntidade.cnpj` |
+| `orgao_nome` | `str \| None` | `orgaoEntidade.razaoSocial` |
+| `orgao_uf` | `str \| None` | `unidadeOrgao.ufSigla` |
+| `fornecedor_nome` | `str \| None` | `nomeRazaoSocialFornecedor` |
+| `ni_fornecedor` | `str \| None` | `niFornecedor` |
+| `valor_inicial` | `float \| None` | `valorInicial` |
+| `valor_global` | `float \| None` | `valorGlobal` |
+| `data_assinatura` | `date \| None` | `dataAssinatura` |
+| `data_vigencia_inicio` | `date \| None` | `dataVigenciaInicio` |
+| `data_vigencia_fim` | `date \| None` | `dataVigenciaFim` |
+| `data_publicacao_pncp` | `datetime \| None` | `dataPublicacaoPncp` |
+
+### Contratacao
+
+| Campo | Tipo | Origem na API |
+|-------|------|---------------|
+| `numero_compra` | `str` | `numeroCompra` |
+| `ano_compra` | `int` | `anoCompra` |
+| `sequencial_compra` | `int` | `sequencialCompra` |
+| `objeto_compra` | `str` | `objetoCompra` |
+| `orgao_cnpj` | `str \| None` | `orgaoEntidade.cnpj` |
+| `orgao_nome` | `str \| None` | `orgaoEntidade.razaoSocial` |
+| `orgao_uf` | `str \| None` | `unidadeOrgao.ufSigla` |
+| `modalidade_nome` | `str \| None` | `modalidadeNome` |
+| `data_publicacao_pncp` | `datetime \| None` | `dataPublicacaoPncp` |
+| `data_abertura_proposta` | `datetime \| None` | `dataAberturaProposta` |
+| `valor_total_estimado` | `float \| None` | `valorTotalEstimado` |
+| `valor_total_homologado` | `float \| None` | `valorTotalHomologado` |
+| `srp` | `bool \| None` | `srp` |
+
+### Ata
+
+| Campo | Tipo | Origem na API |
+|-------|------|---------------|
+| `numero_ata_registro_preco` | `str` | `numeroAtaRegistroPreco` |
+| `ano_ata` | `int` | `anoAta` |
+| `objeto_contratacao` | `str` | `objetoContratacao` |
+| `orgao_cnpj` | `str \| None` | `cnpjOrgao` |
+| `orgao_nome` | `str \| None` | `nomeOrgao` |
+| `vigencia_inicio` | `datetime \| None` | `vigenciaInicio` |
+| `vigencia_fim` | `datetime \| None` | `vigenciaFim` |
+| `data_publicacao_pncp` | `datetime \| None` | `dataPublicacaoPncp` |
+| `cancelado` | `bool \| None` | `cancelado` |
+| `possibilidade_adesao` | `bool \| None` | `possibilidadeAdesao` |
+
+---
+
+## Códigos de Modalidade
+
+| Código | Modalidade |
+|--------|-----------|
+| 1 | Pregão |
+| 2 | Concorrência |
+| 3 | Concurso |
+| 4 | Leilão |
+| 5 | Diálogo Competitivo |
+| 6 | Consulta Pública |
+| 7 | Credenciamento |
+| 8 | Pré-qualificação |
+| 9 | Manifestação de Interesse |
+| 10 | Procedimento Auxiliar |
+| 99 | Inexigibilidade |
+| 100 | Dispensa |
+
+---
+
+## Referência da API
+
+| Recurso | Endpoints |
+|---------|-----------|
+| `client.contratos` | `GET /v1/contratos`, `GET /v1/contratos/atualizacao`, `GET /orgaos/{cnpj}/compras/{ano}/{sequencial}` |
+| `client.contratacoes` | `GET /v1/contratacoes/publicacao`, `GET /v1/contratacoes/proposta`, `GET /v1/contratacoes/atualizacao`, `GET /orgaos/{cnpj}/compras/{ano}/{sequencial}` |
+| `client.atas` | `GET /v1/atas`, `GET /v1/atas/atualizacao` |
+
+### Parâmetros obrigatórios por endpoint
+
+| Método | Parâmetros obrigatórios |
+|--------|------------------------|
+| `contratos.list()` | `data_inicial`, `data_final` |
+| `contratos.list_por_atualizacao()` | `data_inicial`, `data_final` |
+| `contratacoes.list_publicacao()` | `data_inicial`, `data_final`, **`codigo_modalidade`** |
+| `contratacoes.list_atualizacao()` | `data_inicial`, `data_final`, **`codigo_modalidade`** |
+| `contratacoes.list_com_proposta()` | `data_final` |
+| `atas.list()` | `data_inicial`, `data_final` |
+
+Documentação oficial: [Swagger da API de Consulta](https://pncp.gov.br/api/consulta/swagger-ui/index.html)
+
+---
+
 ## Para contribuir
 
 ### Requisitos
 
 - Python **3.12+**
-- [uv](https://docs.astral.sh/uv/) — gerenciador de projetos e pacotes
+- [uv](https://docs.astral.sh/uv/)
 
 ```bash
 uv sync
@@ -207,8 +301,8 @@ uv sync
 ```bash
 git clone https://github.com/gabrielgz0/pypncp
 cd pypncp
-uv sync           # instala tudo — dev deps inclusas
-uv run pytest -v  # tests
+uv sync
+uv run pytest -v
 uv run ruff check src/ tests/
 uv run mypy src/
 ```

@@ -237,6 +237,21 @@ class TestPage:
         assert p.numero_pagina == 1
         assert p.total_paginas == 2
 
+    async def test_aiter(self):
+        """Page pode ser usado como iterador assíncrono."""
+        p = Page[int](
+            data=[10, 20, 30],
+            numeroPagina=1,
+            totalPaginas=1,
+            totalRegistros=3,
+            paginasRestantes=0,
+            empty=False,
+        )
+        results = []
+        async for item in p:
+            results.append(item)
+        assert results == [10, 20, 30]
+
 
 class TestFmtData:
     def test_string_yyyy_mm_dd(self):

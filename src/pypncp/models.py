@@ -42,6 +42,29 @@ class Page[T](BaseModel):
         """Alias conveniente para ``data``."""
         return self.data
 
+    def __aiter__(self):
+        """Permite ``async for item in page:``."""
+        return _PageAsyncIterator(self.data)
+
+
+class _PageAsyncIterator:
+    """Iterador assíncrono para Page[T].
+
+    Itera síncronamente sobre a página atual — útil para consistência
+    com a API de async generators (list_all).
+    """
+
+    def __init__(self, data: list) -> None:
+        self._data = data
+        self._index = 0
+
+    async def __anext__(self):
+        if self._index >= len(self._data):
+            raise StopAsyncIteration
+        item = self._data[self._index]
+        self._index += 1
+        return item
+
 
 # --------------------------------------------------------------------------- #
 #  Órgão / Entidade (aninhado em outros DTOs)
