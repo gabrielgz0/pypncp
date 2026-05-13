@@ -303,3 +303,79 @@ class Ata(BaseModel):
 
     def __repr__(self) -> str:
         return f"Ata(numero={self.numero_ata_registro_preco}, orgao={self.orgao_nome})"
+
+
+# --------------------------------------------------------------------------- #
+#  Busca — SearchResult (API interna /search/)
+# --------------------------------------------------------------------------- #
+
+
+class SearchResult(BaseModel):
+    """Resultado da busca full-text no catálogo do PNCP.
+
+    Schema retornado pelo endpoint ``/api/search/`` (não documentado
+    oficialmente — extraído por engenharia reversa).
+    """
+
+    id: str = ""
+    title: str = ""
+    description: str = ""
+    document_type: str = Field(default="", alias="document_type")
+    item_url: str = Field(default="", alias="item_url")
+
+    # Identificadores
+    ano: str = ""
+    numero_sequencial: str = Field(default="", alias="numero_sequencial")
+    numero_controle_pncp: str | None = Field(default=None, alias="numeroControlePNCP")
+
+    # Órgão
+    orgao_cnpj: str | None = Field(default=None, alias="orgaoCnpj")
+    orgao_nome: str | None = Field(default=None, alias="orgaoNome")
+
+    # Unidade
+    unidade_nome: str | None = Field(default=None, alias="unidadeNome")
+
+    # Esfera / Poder
+    esfera_nome: str | None = Field(default=None, alias="esferaNome")
+    poder_nome: str | None = Field(default=None, alias="poderNome")
+
+    # Localização
+    uf: str | None = None
+    municipio_nome: str | None = Field(default=None, alias="municipioNome")
+
+    # Modalidade
+    modalidade_licitacao_nome: str | None = Field(
+        default=None, alias="modalidadeLicitacaoNome"
+    )
+
+    # Situação
+    situacao_nome: str | None = Field(default=None, alias="situacaoNome")
+
+    # Datas
+    data_publicacao_pncp: datetime | None = Field(
+        default=None, alias="dataPublicacaoPncp"
+    )
+    data_assinatura: datetime | None = Field(default=None, alias="dataAssinatura")
+    data_inicio_vigencia: datetime | None = Field(
+        default=None, alias="dataInicioVigencia"
+    )
+    data_fim_vigencia: datetime | None = Field(default=None, alias="dataFimVigencia")
+
+    # Valores
+    valor_global: float | None = Field(default=None, alias="valorGlobal")
+
+    # Flags
+    cancelado: bool | None = None
+    tem_resultado: bool | None = Field(default=None, alias="temResultado")
+    exigencia_conteudo_nacional: bool | None = Field(
+        default=None, alias="exigenciaConteudoNacional"
+    )
+
+    # Tipo de documento
+    tipo_nome: str | None = Field(default=None, alias="tipoNome")
+    tipo_contrato_nome: str | None = Field(default=None, alias="tipoContratoNome")
+
+    model_config = {"populate_by_name": True, "extra": "ignore"}
+
+    def __repr__(self) -> str:
+        return f"SearchResult(title={self.title!r}, orgao={self.orgao_nome})"
