@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator
 from datetime import date
 from typing import Any, TypeVar
@@ -70,14 +71,47 @@ class BaseResource:
         self,
         path: str,
         model_class: type[T],
+        prefetch: int = 1,
         **params: Any,
     ) -> AsyncIterator[T]:
-        """Itera todas as páginas de um endpoint paginado."""
+        """Itera todas as páginas de um endpoint paginado com prefetch.
+
+        Quando ``prefetch > 0`` (padrão), a próxima página começa a ser
+        baixada em background enquanto o consumidor processa os itens da
+        página atual. O overlap entre I/O e processamento reduz o tempo
+        total da iteração.
+
+        Com ``prefetch=0`` o comportamento é totalmente sequencial: cada
+        página é baixada e processada por vez, sem overlap.
+
+        Exemplo com prefetch=1 (time em ms):
+            fetch p1(500) → yield itens p1(300) → fetch p2(500) → ...
+                     ↓ sobreposto  ↑                   ↓ sobreposto
+                fetch p2 começa ───┘              fetch p3 começa ───┘
+
+            Resultado: 500 + 300 + 500 + 300 = 1300ms (vs 1600ms sequencial)
+        """
         pagina = 1
+        preload: asyncio.Task[Page[T]] | None = None
+
         while True:
-            page = await self._list_page(path, model_class, pagina=pagina, **params)
+            # Se havia prefetch do loop anterior, aguarda
+            if preload is not None:
+                page = await preload
+                preload = None
+            else:
+                page = await self._list_page(path, model_class, pagina=pagina, **params)
+
+            # Dispara prefetch da próxima página em background
+            if page.has_more and prefetch > 0:
+                preload = asyncio.ensure_future(
+                    self._list_page(path, model_class, pagina=pagina + 1, **params)
+                )
+
+            # Yield dos itens — enquanto isso a próxima página baixa
             for item in page.data:
                 yield item
+
             if not page.has_more:
                 break
             pagina += 1

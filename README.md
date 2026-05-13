@@ -104,7 +104,7 @@ async with PNCPClient() as client:
 ### Paginação
 
 ```python
-# Automática — list_all*() itera todas as páginas
+# Automática — list_all*() itera todas as páginas com prefetch
 async for contrato in client.contratos.list_all(
     data_inicial="20250101",
     data_final="20251231",
@@ -124,6 +124,31 @@ print(f"Há mais páginas: {page.has_more}")
 # page pode ser usado como iterador assíncrono
 async for item in page:
     print(item)
+```
+
+**Prefetch:** por padrão, `list_all*()` baixa a próxima página em background
+enquanto o consumidor processa a página atual. O overlap entre I/O e
+processamento reduz o tempo total sem mudar a API:
+
+```
+Sem prefetch (prefetch=0):
+  fetch p1 —> processa p1 —> fetch p2 —> processa p2 —> ...
+
+Com prefetch (prefetch=1, padrão):
+  fetch p1 ──> processa p1 ──> processa p2 ──> ...
+                 ↑                  ↑
+           fetch p2 (bg)      fetch p3 (bg)
+```
+
+Para desligar o prefetch (comportamento estritamente sequencial):
+
+```python
+async for item in client.contratos.list_all(
+    data_inicial="20250101",
+    data_final="20251231",
+    prefetch=0,
+):
+    ...
 ```
 
 ### Tratamento de erros
