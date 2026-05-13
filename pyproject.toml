@@ -4,11 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pypncp"
-version = "0.1.0"
+version = "0.1.1"
 description = "pypncp — Cliente Python assíncrono para a API de Consulta do PNCP"
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
 dependencies = [
     "httpx>=0.28.1",
     "pydantic>=2.13.4",
