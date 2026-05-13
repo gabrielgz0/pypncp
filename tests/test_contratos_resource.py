@@ -118,3 +118,93 @@ class TestContratosResource:
 
         assert len(results) == 1
         await http.aclose()
+
+    async def test_list_all_with_workers(self, httpx_mock):
+        """prefetch>=2 (N workers) entrega todos os itens na ordem."""
+        items_p1 = [self.CONTRATO_JSON]
+        items_p2 = [
+            dict(
+                self.CONTRATO_JSON,
+                sequencialContrato=2,
+                numeroContratoEmpenho="002/2024",
+            )
+        ]
+
+        httpx_mock.add_response(
+            url="https://pncp.gov.br/api/consulta/v1/contratos?pagina=1&dataInicial=20240101&dataFinal=20241231",
+            json={
+                "data": items_p1,
+                "numeroPagina": 1,
+                "totalPaginas": 2,
+                "totalRegistros": 2,
+                "paginasRestantes": 1,
+                "empty": False,
+            },
+        )
+        httpx_mock.add_response(
+            url="https://pncp.gov.br/api/consulta/v1/contratos?pagina=2&dataInicial=20240101&dataFinal=20241231",
+            json={
+                "data": items_p2,
+                "numeroPagina": 2,
+                "totalPaginas": 2,
+                "totalRegistros": 2,
+                "paginasRestantes": 0,
+                "empty": False,
+            },
+        )
+
+        http = HttpClient()
+        resource = ContratosResource(http)
+        results = []
+        async for c in resource.list_all(
+            data_inicial="2024-01-01", data_final="2024-12-31", prefetch=2
+        ):
+            results.append(c)
+        assert len(results) == 2
+        assert results[0].numero_contrato_empenho == "001/2024"
+        assert results[1].numero_contrato_empenho == "002/2024"
+        await http.aclose()
+
+    async def test_list_all_sequential(self, httpx_mock):
+        """prefetch=0 (sequencial) entrega todos os itens."""
+        items_p1 = [self.CONTRATO_JSON]
+        items_p2 = [
+            dict(
+                self.CONTRATO_JSON,
+                sequencialContrato=2,
+                numeroContratoEmpenho="002/2024",
+            )
+        ]
+
+        httpx_mock.add_response(
+            url="https://pncp.gov.br/api/consulta/v1/contratos?pagina=1&dataInicial=20240101&dataFinal=20241231",
+            json={
+                "data": items_p1,
+                "numeroPagina": 1,
+                "totalPaginas": 2,
+                "totalRegistros": 2,
+                "paginasRestantes": 1,
+                "empty": False,
+            },
+        )
+        httpx_mock.add_response(
+            url="https://pncp.gov.br/api/consulta/v1/contratos?pagina=2&dataInicial=20240101&dataFinal=20241231",
+            json={
+                "data": items_p2,
+                "numeroPagina": 2,
+                "totalPaginas": 2,
+                "totalRegistros": 2,
+                "paginasRestantes": 0,
+                "empty": False,
+            },
+        )
+
+        http = HttpClient()
+        resource = ContratosResource(http)
+        results = []
+        async for c in resource.list_all(
+            data_inicial="2024-01-01", data_final="2024-12-31", prefetch=0
+        ):
+            results.append(c)
+        assert len(results) == 2
+        await http.aclose()

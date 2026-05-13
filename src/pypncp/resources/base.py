@@ -185,9 +185,7 @@ class BaseResource:
             p = worker_id + 1
             try:
                 while True:
-                    page = await self._list_page(
-                        path, model_class, pagina=p, **params
-                    )
+                    page = await self._list_page(path, model_class, pagina=p, **params)
                     await queue.put((p, page))
                     if not page.has_more:
                         break
