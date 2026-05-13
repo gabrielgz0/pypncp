@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=70.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "pypncp"
 version = "0.1.0"

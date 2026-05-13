@@ -26,7 +26,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: uv sync --all-extras
+        run: |
+          uv sync --all-extras --frozen
+          uv pip install -e .
 
       - name: Lint
         run: |
