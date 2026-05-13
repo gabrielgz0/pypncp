@@ -9,6 +9,7 @@ resultados de editais, contratos, atas e outros documentos.
 
 from __future__ import annotations
 
+import asyncio
 import math
 from collections.abc import AsyncIterator
 from typing import Any
@@ -115,6 +116,7 @@ class SearchResource:
         q: str,
         tipos_documento: str,
         tam_pagina: int = 50,
+        prefetch: int = 1,
         ordenacao: str | None = None,
         status: str | None = None,
         uf: str | None = None,
@@ -123,10 +125,14 @@ class SearchResource:
     ) -> AsyncIterator[SearchResult]:
         """Itera todos os resultados de busca (paginação automática).
 
+        Quando ``prefetch > 0`` (padrão), a próxima página é baixada em
+        background enquanto o consumidor processa a página atual.
+
         Args:
             q: Termo de busca.
             tipos_documento: Filtro de tipo.
-            tam_pagina: Itens por pagina (maior = menos requests).
+            tam_pagina: Itens por pagina.
+            prefetch: Nivel de concorrencia (0=seq, 1=prefetch, N=workers).
             ordenacao: Ordenacao.
             status: Filtro de status.
             uf: Sigla da UF.
@@ -134,20 +140,43 @@ class SearchResource:
             modalidade_licitacao: Codigo da modalidade.
         """
         pagina = 1
+        preload: asyncio.Task[Page[SearchResult]] | None = None
+
         while True:
-            page = await self.search(
-                q=q,
-                tipos_documento=tipos_documento,
-                pagina=pagina,
-                tam_pagina=tam_pagina,
-                ordenacao=ordenacao,
-                status=status,
-                uf=uf,
-                municipio=municipio,
-                modalidade_licitacao=modalidade_licitacao,
-            )
+            if preload is not None:
+                page = await preload
+                preload = None
+            else:
+                page = await self.search(
+                    q=q,
+                    tipos_documento=tipos_documento,
+                    pagina=pagina,
+                    tam_pagina=tam_pagina,
+                    ordenacao=ordenacao,
+                    status=status,
+                    uf=uf,
+                    municipio=municipio,
+                    modalidade_licitacao=modalidade_licitacao,
+                )
+
+            if page.has_more and prefetch > 0:
+                preload = asyncio.ensure_future(
+                    self.search(
+                        q=q,
+                        tipos_documento=tipos_documento,
+                        pagina=pagina + 1,
+                        tam_pagina=tam_pagina,
+                        ordenacao=ordenacao,
+                        status=status,
+                        uf=uf,
+                        municipio=municipio,
+                        modalidade_licitacao=modalidade_licitacao,
+                    )
+                )
+
             for item in page.data:
                 yield item
+
             if not page.has_more:
                 break
             pagina += 1

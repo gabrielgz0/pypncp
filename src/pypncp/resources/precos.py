@@ -10,11 +10,12 @@ Fluxo completo:
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator
 from typing import Any
 
 from pypncp._internal.http import HttpClient
-from pypncp.models import ItemCompra, ResultadoItem
+from pypncp.models import ItemCompra, Page, ResultadoItem, SearchResult
 from pypncp.resources.search import SearchResource
 
 
@@ -124,11 +125,12 @@ class PrecosResource:
         tam_pagina_search: int = 50,
         max_compras: int = 20,
         paginas_itens: int = 3,
+        prefetch: int = 1,
     ) -> AsyncIterator[dict[str, Any]]:
         """Pipeline completo: busca no catalogo → itens → precos homologados.
 
-        Para cada compra encontrada, busca os itens e seus resultados.
-        Retorna um dict combinado com dados do item + resultado + compra.
+        Quando ``prefetch > 0``, a proxima pagina de busca ja comeca a
+        baixar enquanto as compras da pagina atual sao processadas.
 
         Args:
             q: Termo de busca.
@@ -140,24 +142,44 @@ class PrecosResource:
             tam_pagina_search: Itens por pagina na busca.
             max_compras: Maximo de compras a processar.
             paginas_itens: Paginas de itens por compra.
+            prefetch: Antecipar proxima pagina de busca (0=seq, 1=prefetch).
         """
-        seen = set()
+        seen: set[tuple[str, str]] = set()
         pagina = 1
         compras_processadas = 0
+        preload: asyncio.Task[Page[SearchResult]] | None = None
 
         while compras_processadas < max_compras:
-            page = await self._search.search(
-                q=q,
-                tipos_documento=tipos_documento,
-                pagina=pagina,
-                tam_pagina=tam_pagina_search,
-                ordenacao=ordenacao,
-                status=status,
-                uf=uf,
-            )
+            if preload is not None:
+                page = await preload
+                preload = None
+            else:
+                page = await self._search.search(
+                    q=q,
+                    tipos_documento=tipos_documento,
+                    pagina=pagina,
+                    tam_pagina=tam_pagina_search,
+                    ordenacao=ordenacao,
+                    status=status,
+                    uf=uf,
+                )
 
             if not page.data:
                 break
+
+            # Prefetch proxima pagina de busca em background
+            if page.has_more and prefetch > 0:
+                preload = asyncio.ensure_future(
+                    self._search.search(
+                        q=q,
+                        tipos_documento=tipos_documento,
+                        pagina=pagina + 1,
+                        tam_pagina=tam_pagina_search,
+                        ordenacao=ordenacao,
+                        status=status,
+                        uf=uf,
+                    )
+                )
 
             for result in page.data:
                 if compras_processadas >= max_compras:
