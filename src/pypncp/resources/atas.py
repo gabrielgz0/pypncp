@@ -11,15 +11,7 @@ from pypncp.resources.base import BaseResource
 
 
 class AtasResource(BaseResource):
-    """Recurso para consulta de atas de registro de preço.
-
-    Endpoints:
-        GET /v1/atas              — por período de vigência
-        GET /v1/atas/atualizacao  — por data de atualização global
-
-    A API de atas espera data no formato **yyyyMMdd**.
-    Use ``self._fmt_data()`` (herdado de BaseResource) para normalizar.
-    """
+    """Recurso para consulta de atas de registro de preço."""
 
     def __init__(self, http: HttpClient) -> None:
         super().__init__(http)
@@ -45,11 +37,19 @@ class AtasResource(BaseResource):
         *,
         data_inicial: str | date,
         data_final: str | date,
+        prefetch: int = 1,
     ) -> AsyncIterator[Ata]:
-        """Itera todas as atas em um período (paginação automática)."""
+        """Itera todas as atas em um período (paginação automática).
+
+        Args:
+            data_inicial: Data inicial.
+            data_final: Data final.
+            prefetch: Nível de concorrência: 0=seq, 1=prefetch, N=N workers
+        """
         async for item in self._list_all(
             "/atas",
             Ata,
+            prefetch=prefetch,
             dataInicial=self._fmt_data(data_inicial),
             dataFinal=self._fmt_data(data_final),
         ):
@@ -76,11 +76,19 @@ class AtasResource(BaseResource):
         *,
         data_inicial: str | date,
         data_final: str | date,
+        prefetch: int = 1,
     ) -> AsyncIterator[Ata]:
-        """Itera todas as atas por atualização (paginação automática)."""
+        """Itera todas as atas por atualização (paginação automática).
+
+        Args:
+            data_inicial: Data inicial.
+            data_final: Data final.
+            prefetch: Nível de concorrência: 0=seq, 1=prefetch, N=N workers
+        """
         async for item in self._list_all(
             "/atas/atualizacao",
             Ata,
+            prefetch=prefetch,
             dataInicial=self._fmt_data(data_inicial),
             dataFinal=self._fmt_data(data_final),
         ):

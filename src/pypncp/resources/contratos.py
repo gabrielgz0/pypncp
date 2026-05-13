@@ -11,15 +11,7 @@ from pypncp.resources.base import BaseResource
 
 
 class ContratosResource(BaseResource):
-    """Recurso para consulta de contratos e empenhos.
-
-    Endpoints:
-        GET /v1/contratos                   — por data de publicação
-        GET /v1/contratos/atualizacao       — por data de atualização global
-        GET /v1/orgaos/{cnpj}/compras/{ano}/{sequencial}  — contrato específico
-
-    Datas sempre normalizadas para yyyyMMdd via ``_fmt_data()``.
-    """
+    """Recurso para consulta de contratos e empenhos."""
 
     def __init__(self, http: HttpClient) -> None:
         super().__init__(http)
@@ -32,12 +24,12 @@ class ContratosResource(BaseResource):
         cnpj_orgao: str | None = None,
         pagina: int = 1,
     ) -> Page[Contrato]:
-        """Consulta contratos por período de publicação do PNCP.
+        """Consulta contratos por período de publicação.
 
         Args:
-            data_inicial: Data inicial (date ou YYYY-MM-DD ou YYYYMMDD).
+            data_inicial: Data inicial.
             data_final: Data final.
-            cnpj_orgao: CNPJ do órgão (opcional, apenas dígitos).
+            cnpj_orgao: CNPJ do órgão (opcional).
             pagina: Número da página (começa em 1).
         """
         return await self._list_page(
@@ -55,11 +47,20 @@ class ContratosResource(BaseResource):
         data_inicial: str | date,
         data_final: str | date,
         cnpj_orgao: str | None = None,
+        prefetch: int = 1,
     ) -> AsyncIterator[Contrato]:
-        """Itera todos os contratos em um período (paginação automática)."""
+        """Itera todos os contratos em um período (paginação automática).
+
+        Args:
+            data_inicial: Data inicial.
+            data_final: Data final.
+            cnpj_orgao: CNPJ do órgão (opcional).
+            prefetch: Nível de concorrência: 0=seq, 1=prefetch, N=N workers
+        """
         async for item in self._list_all(
             "/contratos",
             Contrato,
+            prefetch=prefetch,
             dataInicial=self._fmt_data(data_inicial),
             dataFinal=self._fmt_data(data_final),
             cnpjOrgao=cnpj_orgao,
@@ -90,11 +91,20 @@ class ContratosResource(BaseResource):
         data_inicial: str | date,
         data_final: str | date,
         cnpj_orgao: str | None = None,
+        prefetch: int = 1,
     ) -> AsyncIterator[Contrato]:
-        """Itera todos os contratos por atualização (paginação automática)."""
+        """Itera todos os contratos por atualização (paginação automática).
+
+        Args:
+            data_inicial: Data inicial.
+            data_final: Data final.
+            cnpj_orgao: CNPJ do órgão (opcional).
+            prefetch: Nível de concorrência: 0=seq, 1=prefetch, N=N workers
+        """
         async for item in self._list_all(
             "/contratos/atualizacao",
             Contrato,
+            prefetch=prefetch,
             dataInicial=self._fmt_data(data_inicial),
             dataFinal=self._fmt_data(data_final),
             cnpjOrgao=cnpj_orgao,
@@ -107,7 +117,7 @@ class ContratosResource(BaseResource):
         ano: int,
         sequencial: int,
     ) -> Contrato:
-        """Consulta um contrato específico por CNPJ do órgão, ano e sequencial."""
+        """Consulta um contrato específico por CNPJ, ano e sequencial."""
         data = await self._http.get(
             f"/orgaos/{orgao_cnpj}/compras/{ano}/{sequencial}",
         )

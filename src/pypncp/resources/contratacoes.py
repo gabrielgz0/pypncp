@@ -11,16 +11,7 @@ from pypncp.resources.base import BaseResource
 
 
 class ContratacoesResource(BaseResource):
-    """Recurso para consulta de contratações (compras/licitações).
-
-    Endpoints:
-        GET /v1/contratacoes/publicacao    — por data de publicação
-        GET /v1/contratacoes/proposta      — com recebimento de propostas aberto
-        GET /v1/contratacoes/atualizacao   — por data de atualização global
-        GET /v1/orgaos/{cnpj}/compras/{ano}/{sequencial} — contratação específica
-
-    Datas sempre normalizadas para yyyyMMdd via ``_fmt_data()``.
-    """
+    """Recurso para consulta de contratações (compras/licitações)."""
 
     def __init__(self, http: HttpClient) -> None:
         super().__init__(http)
@@ -56,11 +47,20 @@ class ContratacoesResource(BaseResource):
         data_inicial: str | date,
         data_final: str | date,
         codigo_modalidade: int,
+        prefetch: int = 1,
     ) -> AsyncIterator[Contratacao]:
-        """Itera todas as contratações por publicação (paginação automática)."""
+        """Itera todas as contratações por publicação (paginação automática).
+
+        Args:
+            data_inicial: Data inicial.
+            data_final: Data final.
+            codigo_modalidade: Código da modalidade (obrigatório).
+            prefetch: Nível de concorrência: 0=seq, 1=prefetch, N=N workers
+        """
         async for item in self._list_all(
             "/contratacoes/publicacao",
             Contratacao,
+            prefetch=prefetch,
             dataInicial=self._fmt_data(data_inicial),
             dataFinal=self._fmt_data(data_final),
             codigoModalidadeContratacao=codigo_modalidade,
@@ -77,8 +77,8 @@ class ContratacoesResource(BaseResource):
         """Consulta contratações com recebimento de propostas aberto.
 
         Args:
-            data_final: Data final. Apenas data final — sem data inicial.
-            codigo_modalidade: Código da modalidade (opcional neste endpoint).
+            data_final: Data final. Sem data inicial.
+            codigo_modalidade: Código da modalidade (opcional).
             pagina: Número da página.
         """
         return await self._list_page(
@@ -94,11 +94,19 @@ class ContratacoesResource(BaseResource):
         *,
         data_final: str | date,
         codigo_modalidade: int | None = None,
+        prefetch: int = 1,
     ) -> AsyncIterator[Contratacao]:
-        """Itera todas as contratações com proposta aberta (paginação automática)."""
+        """Itera todas as contratações com proposta aberta (paginação automática).
+
+        Args:
+            data_final: Data final.
+            codigo_modalidade: Código da modalidade (opcional).
+            prefetch: Nível de concorrência: 0=seq, 1=prefetch, N=N workers
+        """
         async for item in self._list_all(
             "/contratacoes/proposta",
             Contratacao,
+            prefetch=prefetch,
             dataFinal=self._fmt_data(data_final),
             codigoModalidadeContratacao=codigo_modalidade,
         ):
@@ -112,14 +120,7 @@ class ContratacoesResource(BaseResource):
         codigo_modalidade: int,
         pagina: int = 1,
     ) -> Page[Contratacao]:
-        """Consulta contratações por data de atualização global.
-
-        Args:
-            data_inicial: Data inicial.
-            data_final: Data final.
-            codigo_modalidade: Código da modalidade (obrigatório).
-            pagina: Número da página.
-        """
+        """Consulta contratações por data de atualização global."""
         return await self._list_page(
             "/contratacoes/atualizacao",
             Contratacao,
@@ -135,11 +136,20 @@ class ContratacoesResource(BaseResource):
         data_inicial: str | date,
         data_final: str | date,
         codigo_modalidade: int,
+        prefetch: int = 1,
     ) -> AsyncIterator[Contratacao]:
-        """Itera todas as contratações por atualização (paginação automática)."""
+        """Itera todas as contratações por atualização (paginação automática).
+
+        Args:
+            data_inicial: Data inicial.
+            data_final: Data final.
+            codigo_modalidade: Código da modalidade (obrigatório).
+            prefetch: Nível de concorrência: 0=seq, 1=prefetch, N=N workers
+        """
         async for item in self._list_all(
             "/contratacoes/atualizacao",
             Contratacao,
+            prefetch=prefetch,
             dataInicial=self._fmt_data(data_inicial),
             dataFinal=self._fmt_data(data_final),
             codigoModalidadeContratacao=codigo_modalidade,
