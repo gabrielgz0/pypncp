@@ -1,0 +1,31 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Build artifacts
+build/
+dist/
+*.egg
+*.egg-info/
+
+# Virtual environments
+.venv/
+.venv*
+
+# Testing & coverage
+.coverage
+.coverage.*
+.pytest_cache/
+htmlcov/
+
+# Type checking
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store

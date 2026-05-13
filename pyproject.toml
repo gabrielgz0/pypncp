@@ -1,0 +1,90 @@
+[project]
+name = "pypncp"
+version = "0.1.0"
+description = "pypncp — Cliente Python assíncrono para a API de Consulta do PNCP"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+dependencies = [
+    "httpx>=0.28.1",
+    "pydantic>=2.13.4",
+    "tenacity>=9.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "pytest-httpx>=0.35.0",
+    "ruff>=0.11.0",
+    "mypy>=1.15.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+pypncp = ["py.typed"]
+
+# --------------------------------------------------------------------------- #
+#  Ruff — linter + formatador
+# --------------------------------------------------------------------------- #
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "B905",  # zip() sem strict= — comum em kwargs dinâmicos
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+# --------------------------------------------------------------------------- #
+#  mypy — type checker
+# --------------------------------------------------------------------------- #
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+exclude = [
+    "tests/",
+    ".venv/",
+]
+[[tool.mypy.overrides]]
+module = [
+    "httpx.*",
+    "pydantic.*",
+    "tenacity.*",
+]
+ignore_missing_imports = true
+
+# --------------------------------------------------------------------------- #
+#  pytest
+# --------------------------------------------------------------------------- #
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+# --------------------------------------------------------------------------- #
+#  Cobertura
+# --------------------------------------------------------------------------- #
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
