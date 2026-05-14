@@ -377,10 +377,14 @@ class SearchResult(BaseModel):
 
     model_config = {"populate_by_name": True, "extra": "ignore"}
 
-    # injetado pelo SearchResource — HttpClient para fetch lazy
+    # injetado pelo SearchResource — httpx.AsyncClient para fetch lazy
     _http: Any = None
 
     async def get_resultados(self) -> "list[ResultadoItem]":
+        """precos homologados dos itens desta compra.
+
+        faz fetch lazy: so busca a api quando chamado.
+        """
         if self._http is None or not self.tem_resultado:
             return []
 
@@ -391,10 +395,10 @@ class SearchResult(BaseModel):
         base = "https://pncp.gov.br/api/pncp/v1"
         url_itens = f"{base}/orgaos/{orgao}/compras/{ano}/{compra}/itens"
 
-        data = await self._http.get(
-            url_itens, params={"pagina": 1, "tamanhoPagina": 50}
-        )
-        itens_raw = data if isinstance(data, list) else []
+        # usa httpx.AsyncClient diretamente (nao o HttpClient wrapper)
+        # para evitar duplicacao de base_url
+        r = await self._http.get(url_itens, params={"pagina": 1, "tamanhoPagina": 50})
+        itens_raw = r.json() if isinstance(r.json(), list) else []
 
         resultados: list[ResultadoItem] = []
         for item_raw in itens_raw:
@@ -404,10 +408,11 @@ class SearchResult(BaseModel):
                 f"{base}/orgaos/{orgao}/compras/{ano}/{compra}"
                 f"/itens/{item_raw['numeroItem']}/resultados"
             )
-            res_data = await self._http.get(url_res)
+            res_r = await self._http.get(url_res)
+            res_data = res_r.json() if isinstance(res_r.json(), list) else []
             if isinstance(res_data, list):
-                for r in res_data:
-                    resultados.append(ResultadoItem(**r))
+                for r_item in res_data:
+                    resultados.append(ResultadoItem(**r_item))
         return resultados
 
     def __repr__(self) -> str:

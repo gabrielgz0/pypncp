@@ -1,4 +1,4 @@
-"""Recurso de precos homologados — Integration API do PNCP.
+"""recurso de precos homologados — integration api do pncp.
 
 Endpoints nao documentados oficialmente (integram o portal):
     GET /api/pncp/v1/orgaos/{orgao}/compras/{ano}/{compra}/itens
@@ -66,7 +66,7 @@ class PrecosResource:
         pagina: int = 1,
         tamanho_pagina: int = 50,
     ) -> list[ItemCompra]:
-        """Retorna os itens de uma compra/contrato.
+        """retorna os itens de uma compra/contrato.
 
         Args:
             orgao: CNPJ do orgao (apenas digitos).
@@ -94,7 +94,7 @@ class PrecosResource:
         compra: int,
         item: int,
     ) -> list[ResultadoItem]:
-        """Retorna os precos homologados de um item.
+        """retorna os precos homologados de um item.
 
         Args:
             orgao: CNPJ do orgao.
@@ -127,7 +127,7 @@ class PrecosResource:
         paginas_itens: int = 3,
         prefetch: int = 1,
     ) -> AsyncIterator[dict[str, Any]]:
-        """Pipeline completo: busca no catalogo → itens → precos homologados.
+        """pipeline completo: busca no catalogo → itens → precos homologados.
 
         Quando ``prefetch > 0``, a proxima pagina de busca ja comeca a
         baixar enquanto as compras da pagina atual sao processadas.
