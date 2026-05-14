@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pypncp"
-version = "0.1.3"
+version = "1.0.0"
 description = "pypncp — Cliente Python assíncrono para a API de Consulta do PNCP"
 readme = "README.md"
 requires-python = ">=3.12"
