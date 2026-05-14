@@ -303,3 +303,185 @@ class Ata(BaseModel):
 
     def __repr__(self) -> str:
         return f"Ata(numero={self.numero_ata_registro_preco}, orgao={self.orgao_nome})"
+
+
+# --------------------------------------------------------------------------- #
+#  Busca — SearchResult (API interna /search/)
+# --------------------------------------------------------------------------- #
+
+
+class SearchResult(BaseModel):
+    """Resultado da busca full-text no catálogo do PNCP.
+
+    Schema retornado pelo endpoint ``/api/search/`` (não documentado
+    oficialmente — extraído por engenharia reversa).
+    """
+
+    id: str = ""
+    title: str = ""
+    description: str = ""
+    document_type: str = Field(default="", alias="document_type")
+    item_url: str = Field(default="", alias="item_url")
+
+    # Identificadores
+    ano: str = ""
+    numero_sequencial: str = Field(default="", alias="numero_sequencial")
+    numero_controle_pncp: str | None = Field(default=None, alias="numeroControlePNCP")
+
+    # Órgão
+    orgao_cnpj: str | None = Field(default=None, alias="orgaoCnpj")
+    orgao_nome: str | None = Field(default=None, alias="orgaoNome")
+
+    # Unidade
+    unidade_nome: str | None = Field(default=None, alias="unidadeNome")
+
+    # Esfera / Poder
+    esfera_nome: str | None = Field(default=None, alias="esferaNome")
+    poder_nome: str | None = Field(default=None, alias="poderNome")
+
+    # Localização
+    uf: str | None = None
+    municipio_nome: str | None = Field(default=None, alias="municipioNome")
+
+    # Modalidade
+    modalidade_licitacao_nome: str | None = Field(
+        default=None, alias="modalidadeLicitacaoNome"
+    )
+
+    # Situação
+    situacao_nome: str | None = Field(default=None, alias="situacaoNome")
+
+    # Datas
+    data_publicacao_pncp: datetime | None = Field(
+        default=None, alias="dataPublicacaoPncp"
+    )
+    data_assinatura: datetime | None = Field(default=None, alias="dataAssinatura")
+    data_inicio_vigencia: datetime | None = Field(
+        default=None, alias="dataInicioVigencia"
+    )
+    data_fim_vigencia: datetime | None = Field(default=None, alias="dataFimVigencia")
+
+    # Valores
+    valor_global: float | None = Field(default=None, alias="valorGlobal")
+
+    # Flags
+    cancelado: bool | None = None
+    tem_resultado: bool | None = Field(default=None, alias="temResultado")
+    exigencia_conteudo_nacional: bool | None = Field(
+        default=None, alias="exigenciaConteudoNacional"
+    )
+
+    # Tipo de documento
+    tipo_nome: str | None = Field(default=None, alias="tipoNome")
+    tipo_contrato_nome: str | None = Field(default=None, alias="tipoContratoNome")
+
+    model_config = {"populate_by_name": True, "extra": "ignore"}
+
+    # injetado pelo SearchResource — httpx.AsyncClient para fetch lazy
+    _http: Any = None
+
+    async def get_resultados(self) -> "list[ResultadoItem]":
+        """precos homologados dos itens desta compra.
+
+        faz fetch lazy: so busca a api quando chamado.
+        """
+        if self._http is None or not self.tem_resultado:
+            return []
+
+        parts = self.item_url.split("/")
+        if len(parts) < 5:
+            return []
+        _, _, orgao, ano, compra = parts[:5]
+        base = "https://pncp.gov.br/api/pncp/v1"
+        url_itens = f"{base}/orgaos/{orgao}/compras/{ano}/{compra}/itens"
+
+        # usa httpx.AsyncClient diretamente (nao o HttpClient wrapper)
+        # para evitar duplicacao de base_url
+        r = await self._http.get(url_itens, params={"pagina": 1, "tamanhoPagina": 50})
+        itens_raw = r.json() if isinstance(r.json(), list) else []
+
+        resultados: list[ResultadoItem] = []
+        for item_raw in itens_raw:
+            if not item_raw.get("temResultado"):
+                continue
+            url_res = (
+                f"{base}/orgaos/{orgao}/compras/{ano}/{compra}"
+                f"/itens/{item_raw['numeroItem']}/resultados"
+            )
+            res_r = await self._http.get(url_res)
+            res_data = res_r.json() if isinstance(res_r.json(), list) else []
+            if isinstance(res_data, list):
+                for r_item in res_data:
+                    resultados.append(ResultadoItem(**r_item))
+        return resultados
+
+    def __repr__(self) -> str:
+        return f"SearchResult(title={self.title!r}, orgao={self.orgao_nome})"
+
+
+# --------------------------------------------------------------------------- #
+#  Item de compra — Integration API /itens
+# --------------------------------------------------------------------------- #
+
+
+class ItemCompra(BaseModel):
+    """Item de uma compra/contrato no PNCP (Integration API).
+
+    Schema retornado por ``/api/pncp/v1/orgaos/{orgao}/compras/{ano}/{compra}/itens``.
+    """
+
+    numero_item: int = Field(default=0, alias="numeroItem")
+    descricao: str = ""
+    quantidade: float = 0.0
+    unidade_medida: str | None = Field(default=None, alias="unidadeMedida")
+    valor_unitario_estimado: float | None = Field(
+        default=None, alias="valorUnitarioEstimado"
+    )
+    valor_total: float | None = Field(default=None, alias="valorTotal")
+    situacao: str | None = Field(default=None, alias="situacaoCompraItemNome")
+    tem_resultado: bool | None = Field(default=None, alias="temResultado")
+
+    model_config = {"populate_by_name": True, "extra": "ignore"}
+
+    def __repr__(self) -> str:
+        return f"ItemCompra(num={self.numero_item}, desc={self.descricao[:40]!r})"
+
+
+# --------------------------------------------------------------------------- #
+#  Resultado (preco homologado) — Integration API /resultados
+# --------------------------------------------------------------------------- #
+
+
+class ResultadoItem(BaseModel):
+    """Resultado/preco homologado de um item no PNCP.
+
+    Schema retornado por
+    ``/api/pncp/v1/orgaos/{orgao}/compras/{ano}/{compra}/itens/{item}/resultados``.
+    """
+
+    fornecedor_nome: str = Field(default="", alias="nomeRazaoSocialFornecedor")
+    ni_fornecedor: str = Field(default="", alias="niFornecedor")
+    valor_unitario_homologado: float | None = Field(
+        default=None, alias="valorUnitarioHomologado"
+    )
+    valor_total_homologado: float | None = Field(
+        default=None, alias="valorTotalHomologado"
+    )
+    quantidade_homologada: float | None = Field(
+        default=None, alias="quantidadeHomologada"
+    )
+    data_resultado: str | None = Field(default=None, alias="dataResultado")
+    sequencial_resultado: int | None = Field(default=None, alias="sequencialResultado")
+    situacao: str | None = Field(default=None, alias="situacaoCompraItemResultadoNome")
+
+    model_config = {"populate_by_name": True, "extra": "ignore"}
+
+    @property
+    def cnpj(self) -> str:
+        return self.ni_fornecedor
+
+    def __repr__(self) -> str:
+        return (
+            f"ResultadoItem(fornecedor={self.fornecedor_nome!r}, "
+            f"valor={self.valor_unitario_homologado})"
+        )
