@@ -125,6 +125,7 @@ class PrecosResource:
         tam_pagina_search: int = 50,
         max_compras: int = 20,
         paginas_itens: int = 3,
+        delay: float = 1.0,
         prefetch: int = 1,
     ) -> AsyncIterator[dict[str, Any]]:
         """pipeline completo: busca no catalogo → itens → precos homologados.
@@ -142,6 +143,7 @@ class PrecosResource:
             tam_pagina_search: Itens por pagina na busca.
             max_compras: Maximo de compras a processar.
             paginas_itens: Paginas de itens por compra.
+            delay: Pausa (segundos) entre compras para evitar rate limit.
             prefetch: Antecipar proxima pagina de busca (0=seq, 1=prefetch).
         """
         seen: set[tuple[str, str]] = set()
@@ -240,6 +242,10 @@ class PrecosResource:
                         break  # nao ha mais paginas
 
                 compras_processadas += 1
+
+                # Pausa entre compras para respeitar rate limit da API
+                if delay > 0:
+                    await asyncio.sleep(delay)
 
             if not page.has_more:
                 break
