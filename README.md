@@ -42,6 +42,6 @@ Documentação completa em [`docs/`](docs/quickstart.md):
 | [Erros](docs/errors.md) | Hierarquia de exceções, retry automático |
 | [Contribuindo](docs/contributing.md) | Setup, testes, lint |
 
-Documentação oficial: [Swagger da API de Consulta](https://pncp.gov.br/api/consulta/swagger-ui/index.html)
+Documentação oficial: [Swagger da API PNCP](https://pncp.gov.br/api/pncp/swagger-ui/index.html)
 
 Licença: MIT
