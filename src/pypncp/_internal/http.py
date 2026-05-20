@@ -28,6 +28,7 @@ _RETRYABLE = (
     httpx.TimeoutException,
     httpx.ConnectError,
     httpx.RemoteProtocolError,
+    RateLimitError,
 )
 
 
