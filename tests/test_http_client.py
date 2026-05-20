@@ -8,7 +8,6 @@ from pypncp.exceptions import (
     AuthError,
     NotFoundError,
     PNCPError,
-    RateLimitError,
     ServerError,
 )
 
@@ -94,13 +93,21 @@ class TestHttpClientErrorMapping:
             await client.get("/teste")
         await client.aclose()
 
-    async def test_429_raises_rate_limit(self, httpx_mock):
+    async def test_429_is_retried_then_raises(self, httpx_mock):
         httpx_mock.add_response(
             url="https://pncp.gov.br/api/consulta/v1/teste",
             status_code=429,
         )
-        client = HttpClient()
-        with pytest.raises(RateLimitError):
+        httpx_mock.add_response(
+            url="https://pncp.gov.br/api/consulta/v1/teste",
+            status_code=429,
+        )
+        httpx_mock.add_response(
+            url="https://pncp.gov.br/api/consulta/v1/teste",
+            status_code=429,
+        )
+        client = HttpClient(max_retries=3)
+        with pytest.raises(PNCPError, match="Requisição falhou após 3 tentativas"):
             await client.get("/teste")
         await client.aclose()
 
