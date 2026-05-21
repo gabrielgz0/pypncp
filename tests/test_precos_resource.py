@@ -14,6 +14,8 @@ class TestPrecosResource:
         "valorTotal": 780.0,
         "situacaoCompraItemNome": "homologado",
         "temResultado": True,
+        "materialOuServico": "S",
+        "materialOuServicoNome": "Serviço",
     }
     resultado_json = {
         "nomeRazaoSocialFornecedor": "medilar s/a",
@@ -39,6 +41,8 @@ class TestPrecosResource:
         assert itens[0].numero_item == 1
         assert itens[0].descricao == "dipirona 500mg/ml injetavel"
         assert itens[0].valor_unitario_estimado == 0.78
+        assert itens[0].tipo == "S"
+        assert itens[0].tipo_nome == "Serviço"
         await resource._http.aclose()
 
     async def test_get_resultados(self, httpx_mock):

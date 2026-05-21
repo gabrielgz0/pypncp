@@ -440,6 +440,8 @@ class ItemCompra(BaseModel):
     valor_total: float | None = Field(default=None, alias="valorTotal")
     situacao: str | None = Field(default=None, alias="situacaoCompraItemNome")
     tem_resultado: bool | None = Field(default=None, alias="temResultado")
+    tipo: str | None = Field(default=None, alias="materialOuServico")
+    tipo_nome: str | None = Field(default=None, alias="materialOuServicoNome")
 
     model_config = {"populate_by_name": True, "extra": "ignore"}
 
