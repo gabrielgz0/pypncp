@@ -20,6 +20,11 @@
 | `data_vigencia_inicio` | `date \| None` | `dataVigenciaInicio` |
 | `data_vigencia_fim` | `date \| None` | `dataVigenciaFim` |
 | `data_publicacao_pncp` | `datetime \| None` | `dataPublicacaoPncp` |
+| `numero_controle_pncp` | `str \| None` | `numeroControlePncp` |
+| `numero_controle_pncp_compra` | `str \| None` | `numeroControlePncpCompra` |
+| `numero_controle_pncp_ata` | `str \| None` | `numeroControlePncpAta` |
+| `informacao_complementar` | `str \| None` | `informacaoComplementar` |
+| `data_atualizacao_global` | `datetime \| None` | `dataAtualizacaoGlobal` |
 
 ## Contratacao
 
@@ -38,6 +43,8 @@
 | `valor_total_estimado` | `float \| None` | `valorTotalEstimado` |
 | `valor_total_homologado` | `float \| None` | `valorTotalHomologado` |
 | `srp` | `bool \| None` | `srp` |
+| `modalidade_id` | `int \| None` | `modalidadeId` |
+| `data_atualizacao_global` | `datetime \| None` | `dataAtualizacaoGlobal` |
 
 ## Ata
 
@@ -53,6 +60,12 @@
 | `data_publicacao_pncp` | `datetime \| None` | `dataPublicacaoPncp` |
 | `cancelado` | `bool \| None` | `cancelado` |
 | `possibilidade_adesao` | `bool \| None` | `possibilidadeAdesao` |
+| `numero_controle_pncp_ata` | `str \| None` | `numeroControlePncpAta` |
+| `numero_controle_pncp_compra` | `str \| None` | `numeroControlePncpCompra` |
+| `situacao` | `str \| None` | `situacao` |
+| `unidade_nome` | `str \| None` | `unidadeNome` |
+| `orgao_uf` | `str \| None` | `ufSigla` |
+| `data_atualizacao_global` | `datetime \| None` | `dataAtualizacaoGlobal` |
 
 ## SearchResult
 
@@ -76,6 +89,12 @@
 | `tem_resultado` | `bool \| None` | Se tem resultado homologado |
 | `esfera_nome` | `str \| None` | Esfera (Federal, Estadual, Municipal) |
 | `poder_nome` | `str \| None` | Poder (Executivo, Legislativo, Judiciário) |
+| `id` | `str \| None` | Identificador único |
+| `numero_controle_pncp` | `str \| None` | Número de controle PNCP |
+| `numero_sequencial` | `int \| None` | Número sequencial |
+| `tipo_nome` | `str \| None` | Nome do tipo |
+| `tipo_contrato_nome` | `str \| None` | Nome do tipo de contrato |
+| `exigencia_conteudo_nacional` | `bool \| None` | Exigência de conteúdo nacional |
 
 ## ItemCompra
 
@@ -89,6 +108,8 @@
 | `valor_total` | `float \| None` | Valor total estimado |
 | `situacao` | `str \| None` | Situação (Homologado, etc.) |
 | `tem_resultado` | `bool \| None` | Se possui preço homologado |
+| `tipo` | `str \| None` | Tipo do item |
+| `tipo_nome` | `str \| None` | Nome do tipo |
 
 ## ResultadoItem
 
