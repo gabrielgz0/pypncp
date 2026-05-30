@@ -64,7 +64,7 @@
 | `numero_controle_pncp_compra` | `str \| None` | `numeroControlePncpCompra` |
 | `situacao` | `str \| None` | `situacao` |
 | `unidade_nome` | `str \| None` | `unidadeNome` |
-| `orgao_uf` | `str \| None` | `ufSigla` |
+| `orgao_uf` | `str \| None` | — |
 | `data_atualizacao_global` | `datetime \| None` | `dataAtualizacaoGlobal` |
 
 ## SearchResult
@@ -91,7 +91,7 @@
 | `poder_nome` | `str \| None` | Poder (Executivo, Legislativo, Judiciário) |
 | `id` | `str \| None` | Identificador único |
 | `numero_controle_pncp` | `str \| None` | Número de controle PNCP |
-| `numero_sequencial` | `int \| None` | Número sequencial |
+| `numero_sequencial` | `str` | Número sequencial |
 | `tipo_nome` | `str \| None` | Nome do tipo |
 | `tipo_contrato_nome` | `str \| None` | Nome do tipo de contrato |
 | `exigencia_conteudo_nacional` | `bool \| None` | Exigência de conteúdo nacional |
