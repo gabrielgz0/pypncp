@@ -1,6 +1,9 @@
 """Testes do ContratacoesResource."""
 
+import pytest
+
 from pypncp._internal.http import HttpClient
+from pypncp.exceptions import NotFoundError
 from pypncp.models import Contratacao, Page
 from pypncp.resources.contratacoes import ContratacoesResource
 
@@ -59,4 +62,33 @@ class TestContratacoesResource:
 
         assert len(page.data) == 1
         assert isinstance(page.data[0], Contratacao)
+        await http.aclose()
+
+    async def test_get_returns_contratacao(self, httpx_mock):
+        httpx_mock.add_response(
+            url="https://pncp.gov.br/api/consulta/v1/orgaos/12345678000195/compras/2024/1",
+            json=self.PUBLICACAO_JSON,
+        )
+
+        http = HttpClient()
+        resource = ContratacoesResource(http)
+        contratacao = await resource.get("12345678000195", 2024, 1)
+
+        assert isinstance(contratacao, Contratacao)
+        assert contratacao.numero_compra == "001/2024"
+        await http.aclose()
+
+    async def test_get_raises_not_found(self, httpx_mock):
+        httpx_mock.add_response(
+            url="https://pncp.gov.br/api/consulta/v1/orgaos/12345678000195/compras/2024/1",
+            status_code=404,
+            json={"message": "Contratacao nao encontrada"},
+        )
+
+        http = HttpClient()
+        resource = ContratacoesResource(http)
+
+        with pytest.raises(NotFoundError, match="Contratacao nao encontrada"):
+            await resource.get("12345678000195", 2024, 1)
+
         await http.aclose()
