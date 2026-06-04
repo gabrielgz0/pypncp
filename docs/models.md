@@ -63,7 +63,7 @@
 | `numero_controle_pncp_ata` | `str \| None` | `numeroControlePncpAta` |
 | `numero_controle_pncp_compra` | `str \| None` | `numeroControlePncpCompra` |
 | `situacao` | `str \| None` | `situacao` |
-| `unidade_nome` | `str \| None` | `unidadeNome` |
+| `unidade_nome` | `str \| None` | — |
 | `orgao_uf` | `str \| None` | — |
 | `data_atualizacao_global` | `datetime \| None` | `dataAtualizacaoGlobal` |
 
