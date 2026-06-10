@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 from typing import Any
 
@@ -48,12 +49,18 @@ class HttpClient:
         base_url: str = "https://pncp.gov.br/api/consulta/v1",
         timeout: int = 30,
         max_retries: int = 3,
+        max_concurrent: int = 3,
         token: str | None = None,
         client: httpx.AsyncClient | None = None,
     ) -> None:
+        if max_concurrent < 1:
+            raise ValueError("max_concurrent must be at least 1")
+
         self.base_url = base_url.rstrip("/")
         self._token = token
         self._max_retries = max_retries
+        self._max_concurrent = max_concurrent
+        self._semaphore = asyncio.Semaphore(max_concurrent)
         self._client = client or httpx.AsyncClient(
             timeout=httpx.Timeout(timeout),
         )
@@ -110,7 +117,8 @@ class HttpClient:
                 reraise=True,
             ):
                 with attempt:
-                    response = await self._client.request(method, url, **kwargs)
+                    async with self._semaphore:
+                        response = await self._client.request(method, url, **kwargs)
                     self._raise_on_error(response)
         except _RETRYABLE as exc:
             raise PNCPError(

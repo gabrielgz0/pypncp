@@ -42,12 +42,14 @@ class PNCPClient:
         base_url: str = "https://pncp.gov.br/api/consulta/v1",
         timeout: int = 30,
         max_retries: int = 3,
+        max_concurrent: int = 3,
         http_client: httpx.AsyncClient | None = None,
     ) -> None:
         self._http = HttpClient(
             base_url=base_url,
             timeout=timeout,
             max_retries=max_retries,
+            max_concurrent=max_concurrent,
             token=None,
             client=http_client,
         )
@@ -88,6 +90,7 @@ class _Builder:
         self._base_url = "https://pncp.gov.br/api/consulta/v1"
         self._timeout = 30
         self._max_retries = 3
+        self._max_concurrent = 3
 
     def base_url(self, value: str) -> _Builder:
         self._base_url = value
@@ -101,9 +104,14 @@ class _Builder:
         self._max_retries = value
         return self
 
+    def max_concurrent(self, value: int) -> _Builder:
+        self._max_concurrent = value
+        return self
+
     def build(self) -> PNCPClient:
         return PNCPClient(
             base_url=self._base_url,
             timeout=self._timeout,
             max_retries=self._max_retries,
+            max_concurrent=self._max_concurrent,
         )
