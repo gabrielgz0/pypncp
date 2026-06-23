@@ -1,5 +1,7 @@
 """Testes do HttpClient — retry, error mapping, auth."""
 
+import asyncio
+
 import httpx
 import pytest
 
@@ -13,6 +15,10 @@ from pypncp.exceptions import (
 
 
 class TestHttpClientBase:
+    def test_rejects_non_positive_max_concurrent(self):
+        with pytest.raises(ValueError, match="max_concurrent must be at least 1"):
+            HttpClient(max_concurrent=0)
+
     async def test_get_success(self, httpx_mock):
         httpx_mock.add_response(
             url="https://pncp.gov.br/api/consulta/v1/teste",
@@ -21,6 +27,41 @@ class TestHttpClientBase:
         client = HttpClient()
         result = await client.get("/teste")
         assert result == {"ok": True}
+        await client.aclose()
+
+    async def test_limits_concurrent_requests(self, httpx_mock):
+        active_requests = 0
+        peak_requests = 0
+        first_two_started = asyncio.Event()
+        release_requests = asyncio.Event()
+
+        async def handler(_request):
+            nonlocal active_requests, peak_requests
+            active_requests += 1
+            peak_requests = max(peak_requests, active_requests)
+
+            if active_requests == 2:
+                first_two_started.set()
+
+            await release_requests.wait()
+            active_requests -= 1
+            return httpx.Response(200, json={"ok": True})
+
+        httpx_mock.add_callback(
+            callback=handler,
+            url="https://pncp.gov.br/api/consulta/v1/teste",
+            is_reusable=True,
+        )
+
+        client = HttpClient(max_concurrent=2)
+        requests = [asyncio.create_task(client.get("/teste")) for _ in range(3)]
+
+        await asyncio.wait_for(first_two_started.wait(), timeout=1)
+        await asyncio.sleep(0)
+        assert peak_requests == 2
+
+        release_requests.set()
+        assert await asyncio.gather(*requests) == [{"ok": True}] * 3
         await client.aclose()
 
     async def test_clean_params(self, httpx_mock):

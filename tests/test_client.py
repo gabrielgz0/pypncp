@@ -10,6 +10,7 @@ class TestPNCPClientBuilder:
         client = PNCPClient.builder().build()
         assert client._http.base_url == "https://pncp.gov.br/api/consulta/v1"
         assert client._http._max_retries == 3
+        assert client._http._max_concurrent == 3
         assert client._http._token is None
 
     def test_builder_custom(self):
@@ -18,16 +19,23 @@ class TestPNCPClientBuilder:
             .base_url("https://custom.url/api")
             .timeout(60)
             .retries(5)
+            .max_concurrent(5)
             .build()
         )
         assert client._http.base_url == "https://custom.url/api"
         assert client._http._max_retries == 5
+        assert client._http._max_concurrent == 5
 
     def test_builder_fluent_returns_self(self):
         builder = PNCPClient.builder()
         assert builder.timeout(10) is builder
         assert builder.retries(2) is builder
+        assert builder.max_concurrent(4) is builder
         assert builder.base_url("x") is builder
+
+    def test_constructor_accepts_max_concurrent(self):
+        client = PNCPClient(max_concurrent=5)
+        assert client._http._max_concurrent == 5
 
 
 class TestPNCPClientResources:
