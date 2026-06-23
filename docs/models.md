@@ -106,7 +106,7 @@
 | `unidade_medida` | `str \| None` | Unidade (Unitário, Lote, etc.) |
 | `valor_unitario_estimado` | `float \| None` | Valor unitário estimado |
 | `valor_total` | `float \| None` | Valor total estimado |
-| `situacao` | `str \| None` | Situação do item |
+| `situacao_compra_item_nome` | `str \| None` | Situação do item |
 | `tem_resultado` | `bool \| None` | Se possui preço homologado |
 | `tipo` | `str \| None` | Tipo do item (material ou serviço) |
 | `tipo_nome` | `str \| None` | Nome do tipo |
@@ -165,7 +165,7 @@
 | `indicador_subcontratacao` | `bool \| None` | Indicador de subcontratação |
 | `numero_controle_pncp_compra` | `str \| None` | Número de controle PNCP da compra |
 | `situacao_compra_item_resultado_id` | `int \| None` | ID da situação do resultado |
-| `ordem_classificacao_srp` | `str \| None` | Ordem de classificação SRP |
+| `ordem_classificacao_srp` | `int \| None` | Ordem de classificação SRP |
 | `reserva_remanescente` | `dict \| None` | Reserva remanescente `{codigo, nome}` |
 | `data_inclusao` | `str \| None` | Data de inclusão |
 | `data_atualizacao` | `str \| None` | Data de atualização |

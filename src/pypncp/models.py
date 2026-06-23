@@ -438,7 +438,9 @@ class ItemCompra(BaseModel):
         default=None, alias="valorUnitarioEstimado"
     )
     valor_total: float | None = Field(default=None, alias="valorTotal")
-    situacao: str | None = Field(default=None, alias="situacaoCompraItemNome")
+    situacao_compra_item_nome: str | None = Field(
+        default=None, alias="situacaoCompraItemNome"
+    )
     tem_resultado: bool | None = Field(default=None, alias="temResultado")
     tipo: str | None = Field(default=None, alias="materialOuServico")
     tipo_nome: str | None = Field(default=None, alias="materialOuServicoNome")
@@ -574,7 +576,7 @@ class ResultadoItem(BaseModel):
     situacao_compra_item_resultado_id: int | None = Field(
         default=None, alias="situacaoCompraItemResultadoId"
     )
-    ordem_classificacao_srp: str | None = Field(
+    ordem_classificacao_srp: int | None = Field(
         default=None, alias="ordemClassificacaoSrp"
     )
     reserva_remanescente: dict[str, Any] | None = Field(
