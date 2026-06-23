@@ -438,10 +438,70 @@ class ItemCompra(BaseModel):
         default=None, alias="valorUnitarioEstimado"
     )
     valor_total: float | None = Field(default=None, alias="valorTotal")
-    situacao: str | None = Field(default=None, alias="situacaoCompraItemNome")
+    situacao_compra_item_nome: str | None = Field(
+        default=None, alias="situacaoCompraItemNome"
+    )
     tem_resultado: bool | None = Field(default=None, alias="temResultado")
     tipo: str | None = Field(default=None, alias="materialOuServico")
     tipo_nome: str | None = Field(default=None, alias="materialOuServicoNome")
+
+    # Julgamento e situação
+    criterio_julgamento_id: int | None = Field(
+        default=None, alias="criterioJulgamentoId"
+    )
+    criterio_julgamento_nome: str | None = Field(
+        default=None, alias="criterioJulgamentoNome"
+    )
+    situacao_compra_item: int | None = Field(default=None, alias="situacaoCompraItem")
+
+    # Categoria e classificação
+    item_categoria_id: int | None = Field(default=None, alias="itemCategoriaId")
+    item_categoria_nome: str | None = Field(default=None, alias="itemCategoriaNome")
+    ncm_nbs_codigo: str | None = Field(default=None, alias="ncmNbsCodigo")
+    ncm_nbs_descricao: str | None = Field(default=None, alias="ncmNbsDescricao")
+    catalogo: str | None = None
+    catalogo_codigo_item: str | None = Field(default=None, alias="catalogoCodigoItem")
+    categoria_item_catalogo: str | None = Field(
+        default=None, alias="categoriaItemCatalogo"
+    )
+
+    # Benefícios e margens
+    incentivo_produtivo_basico: bool | None = Field(
+        default=None, alias="incentivoProdutivoBasico"
+    )
+    tipo_beneficio: int | None = Field(default=None, alias="tipoBeneficio")
+    tipo_beneficio_nome: str | None = Field(default=None, alias="tipoBeneficioNome")
+    aplicabilidade_margem_preferencia_normal: bool | None = Field(
+        default=None, alias="aplicabilidadeMargemPreferenciaNormal"
+    )
+    aplicabilidade_margem_preferencia_adicional: bool | None = Field(
+        default=None, alias="aplicabilidadeMargemPreferenciaAdicional"
+    )
+    percentual_margem_preferencia_normal: str | None = Field(
+        default=None, alias="percentualMargemPreferenciaNormal"
+    )
+    percentual_margem_preferencia_adicional: str | None = Field(
+        default=None, alias="percentualMargemPreferenciaAdicional"
+    )
+    tipo_margem_preferencia: str | None = Field(
+        default=None, alias="tipoMargemPreferencia"
+    )
+    exigencia_conteudo_nacional: bool | None = Field(
+        default=None, alias="exigenciaConteudoNacional"
+    )
+    orcamento_sigiloso: bool | None = Field(default=None, alias="orcamentoSigiloso")
+
+    # Datas e complementos
+    data_inclusao: str | None = Field(default=None, alias="dataInclusao")
+    data_atualizacao: str | None = Field(default=None, alias="dataAtualizacao")
+    informacao_complementar: str | None = Field(
+        default=None, alias="informacaoComplementar"
+    )
+    patrimonio: str | None = None
+    codigo_registro_imobiliario: str | None = Field(
+        default=None, alias="codigoRegistroImobiliario"
+    )
+    imagem: int | None = None
 
     model_config = {"populate_by_name": True, "extra": "ignore"}
 
@@ -461,8 +521,20 @@ class ResultadoItem(BaseModel):
     ``/api/pncp/v1/orgaos/{orgao}/compras/{ano}/{compra}/itens/{item}/resultados``.
     """
 
+    # Fornecedor
     fornecedor_nome: str = Field(default="", alias="nomeRazaoSocialFornecedor")
     ni_fornecedor: str = Field(default="", alias="niFornecedor")
+    porte_fornecedor_id: int | None = Field(default=None, alias="porteFornecedorId")
+    porte_fornecedor_nome: str | None = Field(default=None, alias="porteFornecedorNome")
+    natureza_juridica_id: str | None = Field(default=None, alias="naturezaJuridicaId")
+    natureza_juridica_nome: str | None = Field(
+        default=None, alias="naturezaJuridicaNome"
+    )
+    tipo_pessoa: str | None = Field(default=None, alias="tipoPessoa")
+    codigo_pais: str | None = Field(default=None, alias="codigoPais")
+    numero_item: int | None = Field(default=None, alias="numeroItem")
+
+    # Valores
     valor_unitario_homologado: float | None = Field(
         default=None, alias="valorUnitarioHomologado"
     )
@@ -475,6 +547,64 @@ class ResultadoItem(BaseModel):
     data_resultado: str | None = Field(default=None, alias="dataResultado")
     sequencial_resultado: int | None = Field(default=None, alias="sequencialResultado")
     situacao: str | None = Field(default=None, alias="situacaoCompraItemResultadoNome")
+
+    # Benefícios e descontos
+    percentual_desconto: float | None = Field(default=None, alias="percentualDesconto")
+    aplicacao_margem_preferencia: bool | None = Field(
+        default=None, alias="aplicacaoMargemPreferencia"
+    )
+    aplicacao_beneficio_me_epp: bool | None = Field(
+        default=None, alias="aplicacaoBeneficioMeEpp"
+    )
+    aplicacao_criterio_desempate: bool | None = Field(
+        default=None, alias="aplicacaoCriterioDesempate"
+    )
+    amparo_legal_margem_preferencia: str | None = Field(
+        default=None, alias="amparoLegalMargemPreferencia"
+    )
+    amparo_legal_criterio_desempate: str | None = Field(
+        default=None, alias="amparoLegalCriterioDesempate"
+    )
+    indicador_subcontratacao: bool | None = Field(
+        default=None, alias="indicadorSubcontratacao"
+    )
+
+    # Controle
+    numero_controle_pncp_compra: str | None = Field(
+        default=None, alias="numeroControlePNCPCompra"
+    )
+    situacao_compra_item_resultado_id: int | None = Field(
+        default=None, alias="situacaoCompraItemResultadoId"
+    )
+    ordem_classificacao_srp: int | None = Field(
+        default=None, alias="ordemClassificacaoSrp"
+    )
+    reserva_remanescente: dict[str, Any] | None = Field(
+        default=None, alias="reservaRemanescente"
+    )
+
+    # Datas e moeda
+    data_inclusao: str | None = Field(default=None, alias="dataInclusao")
+    data_atualizacao: str | None = Field(default=None, alias="dataAtualizacao")
+    data_cancelamento: str | None = Field(default=None, alias="dataCancelamento")
+    moeda_estrangeira: str | None = Field(default=None, alias="moedaEstrangeira")
+    valor_nominal_moeda_estrangeira: str | None = Field(
+        default=None, alias="valorNominalMoedaEstrangeira"
+    )
+    data_cotacao_moeda_estrangeira: str | None = Field(
+        default=None, alias="dataCotacaoMoedaEstrangeira"
+    )
+    timezone_cotacao_moeda_estrangeira: str | None = Field(
+        default=None, alias="timezoneCotacaoMoedaEstrangeira"
+    )
+    localidade_fornecedor: str | None = Field(
+        default=None, alias="localidadeFornecedor"
+    )
+    localidade_exterior: str | None = Field(default=None, alias="localidadeExterior")
+    pais_origem_produto_servico: str | None = Field(
+        default=None, alias="paisOrigemProdutoServico"
+    )
+    motivo_cancelamento: str | None = Field(default=None, alias="motivoCancelamento")
 
     model_config = {"populate_by_name": True, "extra": "ignore"}
 
