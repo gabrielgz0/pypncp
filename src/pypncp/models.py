@@ -450,9 +450,7 @@ class ItemCompra(BaseModel):
     criterio_julgamento_nome: str | None = Field(
         default=None, alias="criterioJulgamentoNome"
     )
-    situacao_compra_item: int | None = Field(
-        default=None, alias="situacaoCompraItem"
-    )
+    situacao_compra_item: int | None = Field(default=None, alias="situacaoCompraItem")
 
     # Categoria e classificação
     item_categoria_id: int | None = Field(default=None, alias="itemCategoriaId")
@@ -460,9 +458,7 @@ class ItemCompra(BaseModel):
     ncm_nbs_codigo: str | None = Field(default=None, alias="ncmNbsCodigo")
     ncm_nbs_descricao: str | None = Field(default=None, alias="ncmNbsDescricao")
     catalogo: str | None = None
-    catalogo_codigo_item: str | None = Field(
-        default=None, alias="catalogoCodigoItem"
-    )
+    catalogo_codigo_item: str | None = Field(default=None, alias="catalogoCodigoItem")
     categoria_item_catalogo: str | None = Field(
         default=None, alias="categoriaItemCatalogo"
     )
@@ -526,15 +522,9 @@ class ResultadoItem(BaseModel):
     # Fornecedor
     fornecedor_nome: str = Field(default="", alias="nomeRazaoSocialFornecedor")
     ni_fornecedor: str = Field(default="", alias="niFornecedor")
-    porte_fornecedor_id: int | None = Field(
-        default=None, alias="porteFornecedorId"
-    )
-    porte_fornecedor_nome: str | None = Field(
-        default=None, alias="porteFornecedorNome"
-    )
-    natureza_juridica_id: str | None = Field(
-        default=None, alias="naturezaJuridicaId"
-    )
+    porte_fornecedor_id: int | None = Field(default=None, alias="porteFornecedorId")
+    porte_fornecedor_nome: str | None = Field(default=None, alias="porteFornecedorNome")
+    natureza_juridica_id: str | None = Field(default=None, alias="naturezaJuridicaId")
     natureza_juridica_nome: str | None = Field(
         default=None, alias="naturezaJuridicaNome"
     )
@@ -553,17 +543,11 @@ class ResultadoItem(BaseModel):
         default=None, alias="quantidadeHomologada"
     )
     data_resultado: str | None = Field(default=None, alias="dataResultado")
-    sequencial_resultado: int | None = Field(
-        default=None, alias="sequencialResultado"
-    )
-    situacao: str | None = Field(
-        default=None, alias="situacaoCompraItemResultadoNome"
-    )
+    sequencial_resultado: int | None = Field(default=None, alias="sequencialResultado")
+    situacao: str | None = Field(default=None, alias="situacaoCompraItemResultadoNome")
 
     # Benefícios e descontos
-    percentual_desconto: float | None = Field(
-        default=None, alias="percentualDesconto"
-    )
+    percentual_desconto: float | None = Field(default=None, alias="percentualDesconto")
     aplicacao_margem_preferencia: bool | None = Field(
         default=None, alias="aplicacaoMargemPreferencia"
     )
@@ -593,7 +577,7 @@ class ResultadoItem(BaseModel):
     ordem_classificacao_srp: str | None = Field(
         default=None, alias="ordemClassificacaoSrp"
     )
-    reserva_remanescente: dict | None = Field(
+    reserva_remanescente: dict[str, Any] | None = Field(
         default=None, alias="reservaRemanescente"
     )
 
@@ -601,9 +585,7 @@ class ResultadoItem(BaseModel):
     data_inclusao: str | None = Field(default=None, alias="dataInclusao")
     data_atualizacao: str | None = Field(default=None, alias="dataAtualizacao")
     data_cancelamento: str | None = Field(default=None, alias="dataCancelamento")
-    moeda_estrangeira: str | None = Field(
-        default=None, alias="moedaEstrangeira"
-    )
+    moeda_estrangeira: str | None = Field(default=None, alias="moedaEstrangeira")
     valor_nominal_moeda_estrangeira: str | None = Field(
         default=None, alias="valorNominalMoedaEstrangeira"
     )
@@ -616,15 +598,11 @@ class ResultadoItem(BaseModel):
     localidade_fornecedor: str | None = Field(
         default=None, alias="localidadeFornecedor"
     )
-    localidade_exterior: str | None = Field(
-        default=None, alias="localidadeExterior"
-    )
+    localidade_exterior: str | None = Field(default=None, alias="localidadeExterior")
     pais_origem_produto_servico: str | None = Field(
         default=None, alias="paisOrigemProdutoServico"
     )
-    motivo_cancelamento: str | None = Field(
-        default=None, alias="motivoCancelamento"
-    )
+    motivo_cancelamento: str | None = Field(default=None, alias="motivoCancelamento")
 
     model_config = {"populate_by_name": True, "extra": "ignore"}
 
